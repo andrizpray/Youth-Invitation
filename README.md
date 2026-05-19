@@ -1,36 +1,106 @@
-This is a [Next.js](https://nextjs.org) project bootstrapped with [`create-next-app`](https://nextjs.org/docs/app/api-reference/cli/create-next-app).
+# Youth Invitation
 
-## Getting Started
+Undangan pernikahan digital dengan fitur lengkap — template custom, RSVP online, dan manajemen tamu.
 
-First, run the development server:
+## Fitur
+
+### Fase 1 ✅
+- Auth system (register, login, JWT + cookie)
+- 10 template undangan
+- CRUD undangan dengan validasi slug
+- Dashboard admin (buat, edit, publish, hapus)
+- RSVP system dengan ucapan tamu
+- Public view undangan (`/[slug]`)
+
+### Fase 2 ✅
+- 3 template visual proper:
+  - **ClassicGold** — dark navy + gold, elegan klasik
+  - **RomanticBlush** — soft pink + floral, romantis
+  - **IslamicGreen** — hijau islami + ayat Al-Quran
+- Countdown timer real-time
+- Opening screen dengan animasi
+- Validasi slug + blacklist reserved paths
+
+### Roadmap
+- [ ] Fase 3: Manajemen tamu (upload CSV, link personal)
+- [ ] Fase 4: Dashboard analytics (grafik RSVP)
+- [ ] Fase 5: Notifikasi WhatsApp
+- [ ] Fase 6: Upload media (foto, musik)
+- [ ] Fase 7: Payment & order management
+
+## Tech Stack
+
+- **Frontend:** Next.js 16 (App Router), Tailwind CSS 4
+- **Backend:** Next.js API Routes
+- **Database:** SQLite (better-sqlite3)
+- **Auth:** JWT + bcrypt
+- **Fonts:** Playfair Display, Great Vibes, Amiri, Cormorant Garamond
+
+## Cara Menjalankan
+
+### Development
 
 ```bash
+# Install dependencies
+npm install
+
+# Jalankan development server
 npm run dev
-# or
-yarn dev
-# or
-pnpm dev
-# or
-bun dev
 ```
 
-Open [http://localhost:3000](http://localhost:3000) with your browser to see the result.
+Buka [http://localhost:3000](http://localhost:3000)
 
-You can start editing the page by modifying `app/page.tsx`. The page auto-updates as you edit the file.
+### Production
 
-This project uses [`next/font`](https://nextjs.org/docs/app/building-your-application/optimizing/fonts) to automatically optimize and load [Geist](https://vercel.com/font), a new font family for Vercel.
+```bash
+# Build
+npm run build
 
-## Learn More
+# Jalankan production
+npm start
+```
 
-To learn more about Next.js, take a look at the following resources:
+### Setup Awal
 
-- [Next.js Documentation](https://nextjs.org/docs) - learn about Next.js features and API.
-- [Learn Next.js](https://nextjs.org/learn) - an interactive Next.js tutorial.
+1. Buka `/api/seed` untuk mengisi template default (10 template)
+2. Buka `/api/setup` untuk inisialisasi database
+3. Register akun baru di `/register`
+4. Login dan mulai buat undangan
 
-You can check out [the Next.js GitHub repository](https://github.com/vercel/next.js) - your feedback and contributions are welcome!
+## Struktur Folder
 
-## Deploy on Vercel
+```
+src/
+├── app/
+│   ├── [slug]/           # Public view undangan
+│   ├── api/              # API routes
+│   │   ├── auth/         # Login, register, me
+│   │   ├── invitations/  # CRUD undangan
+│   │   ├── invites/      # Public API undangan
+│   │   ├── rsvp/         # RSVP submission
+│   │   ├── templates/    # List template
+│   │   └── seed/         # Seed template
+│   ├── dashboard/        # Dashboard admin
+│   ├── login/            # Halaman login
+│   └── register/         # Halaman register
+├── components/
+│   └── templates/        # Template components
+│       ├── ClassicGold.tsx
+│       ├── RomanticBlush.tsx
+│       ├── IslamicGreen.tsx
+│       ├── Countdown.tsx
+│       └── RsvpSection.tsx
+└── lib/
+    ├── auth.ts           # Auth helper
+    ├── db.ts             # Database connection
+    ├── seed.ts           # Template data
+    └── types.ts          # TypeScript types
+```
 
-The easiest way to deploy your Next.js app is to use the [Vercel Platform](https://vercel.com/new?utm_medium=default-template&filter=next.js&utm_source=create-next-app&utm_campaign=create-next-app-readme) from the creators of Next.js.
+## Default Login
 
-Check out our [Next.js deployment documentation](https://nextjs.org/docs/app/building-your-application/deploying) for more details.
+Setelah register, user pertama bisa jadi admin manual di database.
+
+## License
+
+MIT
