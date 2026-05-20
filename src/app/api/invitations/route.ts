@@ -62,12 +62,15 @@ export async function POST(req: NextRequest) {
     }
 
     const template = db.prepare(
-      'SELECT id FROM templates WHERE id = ? AND is_active = 1'
-    ).get(body.template_id);
+      'SELECT id, colors FROM templates WHERE id = ? AND is_active = 1'
+    ).get(body.template_id) as any;
 
     if (!template) {
       return NextResponse.json({ error: 'Template tidak ditemukan' }, { status: 400 });
     }
+
+    // Pakai warna default dari template, bukan hardcoded ClassicGold
+    const defaultColors = template.colors || '{"primary":"#d4af37","secondary":"#ffffff","accent":"#1a1a2e"}';
 
     db.prepare(`
       INSERT INTO invitations (
@@ -83,7 +86,7 @@ export async function POST(req: NextRequest) {
       body.date_akad || null, body.time_akad || null,
       body.location || '', body.address || '',
       body.maps_url || null,
-      body.colors || '{"primary":"#d4af37","secondary":"#ffffff","accent":"#1a1a2e"}',
+      body.colors || defaultColors,
       body.font_family || 'serif',
       body.layout_style || 'classic',
       body.event_date || null,

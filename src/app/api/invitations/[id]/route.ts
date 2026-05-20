@@ -67,6 +67,15 @@ export async function PATCH(
       'template_id',
     ];
 
+    // Jika template_id diganti dan colors tidak diset manual,
+    // otomatis pakai warna default dari template baru
+    if (body.template_id && body.colors === undefined) {
+      const tmpl = db.prepare('SELECT colors FROM templates WHERE id = ?').get(body.template_id) as any;
+      if (tmpl?.colors) {
+        body.colors = tmpl.colors;
+      }
+    }
+
     const updates: string[] = [];
     const values: any[] = [];
 
