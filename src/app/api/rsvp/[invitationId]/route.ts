@@ -55,16 +55,34 @@ export async function POST(
       return NextResponse.json({ error: 'Nama wajib diisi' }, { status: 400 });
     }
 
-    const id = uuidv4();
-    db.prepare(`
-      INSERT INTO guests (id, invitation_id, name, phone, is_attending, guest_count, message)
-      VALUES (?, ?, ?, ?, ?, ?, ?)
-    `).run(
-      id, invitationId, body.name, body.phone || null,
-      body.is_attending ? 1 : 0,
-      Math.max(1, Math.min(10, parseInt(body.guest_count) || 1)),
-      body.message || null
-    );
+    const isAttending = body.is_attending ? 1 : 0;
+    const guestCount = Math.max(1, Math.min(10, parseInt(body.guest_count) || 1));
+
+    // Check if guest already exists by name
+    const existingGuest = db.prepare(
+      'SELECT id FROM guests WHERE invitation_id = ? AND name = ?'
+    ).get(invitationId, body.name.trim()) as any;
+
+    if (existingGuest) {
+      // Update existing guest
+      db.prepare(`
+        UPDATE guests SET
+          is_attending = ?,
+          guest_count = ?,
+          message = ?
+        WHERE id = ?
+      `).run(isAttending, guestCount, body.message || null, existingGuest.id);
+    } else {
+      // Insert new guest
+      const id = uuidv4();
+      db.prepare(`
+        INSERT INTO guests (id, invitation_id, name, phone, is_attending, guest_count, message)
+        VALUES (?, ?, ?, ?, ?, ?, ?)
+      `).run(
+        id, invitationId, body.name.trim(), body.phone || null,
+        isAttending, guestCount, body.message || null
+      );
+    }
 
     return NextResponse.json({ success: true, message: 'RSVP berhasil dikirim' }, { status: 201 });
   } catch (error) {

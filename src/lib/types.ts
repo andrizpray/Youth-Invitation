@@ -46,7 +46,9 @@ export interface Guest {
   id: string;
   invitation_id: string;
   name: string;
+  email: string | null;
   phone: string | null;
+  code: string | null;
   is_attending: number;
   guest_count: number;
   message: string | null;

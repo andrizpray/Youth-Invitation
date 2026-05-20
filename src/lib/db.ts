@@ -84,7 +84,9 @@ function initSchema(db: Database.Database) {
       id TEXT PRIMARY KEY,
       invitation_id TEXT NOT NULL REFERENCES invitations(id) ON DELETE CASCADE,
       name TEXT NOT NULL,
+      email TEXT,
       phone TEXT,
+      code TEXT UNIQUE,
       is_attending INTEGER NOT NULL DEFAULT 0,
       guest_count INTEGER NOT NULL DEFAULT 1,
       message TEXT,
@@ -109,6 +111,7 @@ function initSchema(db: Database.Database) {
     CREATE INDEX IF NOT EXISTS idx_invitations_user ON invitations(user_id);
     CREATE INDEX IF NOT EXISTS idx_invitations_slug ON invitations(slug);
     CREATE INDEX IF NOT EXISTS idx_guests_invitation ON guests(invitation_id);
+    CREATE INDEX IF NOT EXISTS idx_guests_code ON guests(code);
     CREATE INDEX IF NOT EXISTS idx_orders_user ON orders(user_id);
     CREATE INDEX IF NOT EXISTS idx_orders_invitation ON orders(invitation_id);
   `);

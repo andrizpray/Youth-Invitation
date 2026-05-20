@@ -1,7 +1,7 @@
 'use client';
 
 import { useEffect, useState } from 'react';
-import { useParams } from 'next/navigation';
+import { useParams, useSearchParams } from 'next/navigation';
 import { InvitationData, GuestData, RsvpForm } from '@/components/templates/types';
 import ClassicGold from '@/components/templates/ClassicGold';
 import RomanticBlush from '@/components/templates/RomanticBlush';
@@ -11,9 +11,11 @@ type RsvpStatus = 'idle' | 'submitting' | 'success' | 'error';
 
 function OpeningScreen({
   invitation,
+  guestName,
   onOpen,
 }: {
   invitation: InvitationData;
+  guestName: string | null;
   onOpen: () => void;
 }) {
   const colors = JSON.parse(invitation.colors) as { primary: string; secondary: string; accent: string };
@@ -52,6 +54,16 @@ function OpeningScreen({
       >
         {invitation.partner_name2}
       </h1>
+
+      {/* Guest name */}
+      {guestName && (
+        <div className="mb-6">
+          <p className="text-white/50 text-xs uppercase tracking-[0.2em] mb-2">Kepada Yth.</p>
+          <p className="text-2xl text-white font-medium" style={{ fontFamily: '"Great Vibes", cursive' }}>
+            {guestName}
+          </p>
+        </div>
+      )}
 
       <p className="text-white/50 text-sm mb-10 max-w-xs leading-relaxed">
         Kami mengundang kehadiran Bapak/Ibu/Saudara/i
@@ -100,9 +112,11 @@ function TemplateRenderer({
 
 export default function InvitationPage() {
   const params = useParams();
+  const searchParams = useSearchParams();
   const [invitation, setInvitation] = useState<InvitationData | null>(null);
   const [templateSlug, setTemplateSlug] = useState('classic-gold');
   const [guests, setGuests] = useState<GuestData[]>([]);
+  const [guestName, setGuestName] = useState<string | null>(null);
   const [loading, setLoading] = useState(true);
   const [opened, setOpened] = useState(false);
   const [rsvpStatus, setRsvpStatus] = useState<RsvpStatus>('idle');
@@ -120,6 +134,22 @@ export default function InvitationPage() {
       .catch(() => setInvitation(null))
       .finally(() => setLoading(false));
   }, [params.slug]);
+
+  // Load guest name from query param
+  useEffect(() => {
+    const tamuCode = searchParams.get('tamu');
+    if (!tamuCode) return;
+
+    const slug = params.slug as string;
+    fetch(`/api/guests/by-code/${slug}/${tamuCode}`)
+      .then(async (res) => {
+        if (res.ok) {
+          const data = await res.json();
+          setGuestName(data.guest?.name || null);
+        }
+      })
+      .catch(() => setGuestName(null));
+  }, [searchParams, params.slug]);
 
   const loadGuests = async () => {
     if (!invitation) return;
@@ -188,7 +218,7 @@ export default function InvitationPage() {
         {invitation.music_url && (
           <audio src={invitation.music_url} autoPlay loop className="hidden" />
         )}
-        <OpeningScreen invitation={invitation} onOpen={() => setOpened(true)} />
+        <OpeningScreen invitation={invitation} guestName={guestName} onOpen={() => setOpened(true)} />
       </>
     );
   }

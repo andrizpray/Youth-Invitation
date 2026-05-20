@@ -2,6 +2,7 @@
 
 import { useEffect, useState } from 'react';
 import { useParams, useRouter } from 'next/navigation';
+import { MediaUploader, MusicUploader } from '@/components/MediaUploaders';
 
 interface Invitation {
   id: string;
@@ -108,6 +109,9 @@ export default function EditInvitationPage() {
   const tabs = [
     { id: 'content', label: 'Konten' },
     { id: 'design', label: 'Tampilan' },
+    { id: 'media', label: 'Media' },
+    { id: 'guests', label: 'Tamu' },
+    { id: 'analytics', label: 'Analytics' },
     { id: 'rsvp', label: 'RSVP' },
     { id: 'publish', label: 'Publikasi' },
   ];
@@ -313,6 +317,93 @@ export default function EditInvitationPage() {
               <option value="sans">Inter (Sans-serif)</option>
               <option value="cursive">Great Vibes (Cursive)</option>
             </select>
+          </div>
+        </div>
+      )}
+
+      {/* Media Tab */}
+      {tab === 'media' && (
+        <div className="bg-white rounded-2xl p-6 border border-gray-100 space-y-6">
+          <div>
+            <h3 className="font-semibold text-gray-900 mb-3">Galeri Foto</h3>
+            <p className="text-gray-500 text-sm mb-4">Upload maksimal 10 foto untuk galeri undangan</p>
+            
+            <MediaUploader 
+              invitationId={invitation.id} 
+              type="photo" 
+            />
+          </div>
+
+          <hr className="border-gray-100" />
+
+          <div>
+            <h3 className="font-semibold text-gray-900 mb-3">Musik Latar</h3>
+            <p className="text-gray-500 text-sm mb-4">Upload file musik (MP3, OGG, WAV - max 10MB)</p>
+            
+            <MusicUploader 
+              invitationId={invitation.id}
+              currentUrl={form.music_url}
+              onUploaded={(url) => setForm({ ...form, music_url: url })}
+            />
+          </div>
+        </div>
+      )}
+
+      {/* Guests Tab */}
+      {tab === 'guests' && (
+        <div className="bg-white rounded-2xl p-6 border border-gray-100">
+          <div className="flex items-center justify-between mb-4">
+            <h3 className="font-semibold text-gray-900">Manajemen Tamu</h3>
+            <a
+              href={`/dashboard/invitations/${invitation.id}/guests`}
+              className="px-4 py-2 bg-amber-500 hover:bg-amber-600 text-white rounded-xl font-medium text-sm transition-all"
+            >
+              Kelola Tamu →
+            </a>
+          </div>
+          <p className="text-gray-500 text-sm">
+            Tambahkan daftar tamu, upload CSV, atau salin link personal untuk setiap tamu.
+          </p>
+          {invitation.total_guests > 0 && (
+            <p className="mt-4 text-gray-700 bg-gray-50 px-4 py-3 rounded-xl text-sm">
+              👥 {invitation.total_guests} tamu terdaftar
+            </p>
+          )}
+        </div>
+      )}
+
+      {/* Analytics Tab */}
+      {tab === 'analytics' && (
+        <div className="bg-white rounded-2xl p-6 border border-gray-100">
+          <div className="flex items-center justify-between mb-4">
+            <h3 className="font-semibold text-gray-900">Statistik & Analytics</h3>
+            <a
+              href={`/dashboard/invitations/${invitation.id}/analytics`}
+              className="px-4 py-2 bg-amber-500 hover:bg-amber-600 text-white rounded-xl font-medium text-sm transition-all"
+            >
+              Lihat Detail →
+            </a>
+          </div>
+          <p className="text-gray-500 text-sm mb-4">
+            Pantau tingkat kehadiran, grafik RSVP, dan data statistik tamu.
+          </p>
+          <div className="grid grid-cols-3 gap-4">
+            <div className="bg-gray-50 rounded-xl p-4 text-center">
+              <p className="text-2xl font-bold text-gray-900">{invitation.total_guests}</p>
+              <p className="text-xs text-gray-500">Total Tamu</p>
+            </div>
+            <div className="bg-green-50 rounded-xl p-4 text-center">
+              <p className="text-2xl font-bold text-green-600">{invitation.total_attending}</p>
+              <p className="text-xs text-gray-500">Hadir</p>
+            </div>
+            <div className="bg-amber-50 rounded-xl p-4 text-center">
+              <p className="text-2xl font-bold text-amber-600">
+                {invitation.total_guests > 0 
+                  ? Math.round((invitation.total_attending / invitation.total_guests) * 100) 
+                  : 0}%
+              </p>
+              <p className="text-xs text-gray-500">Kehadiran</p>
+            </div>
           </div>
         </div>
       )}
