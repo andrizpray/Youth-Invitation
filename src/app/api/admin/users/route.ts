@@ -3,6 +3,8 @@ import { getCurrentUser, requireAdmin, hashPassword } from '@/lib/auth';
 import { getDb } from '@/lib/db';
 import { randomUUID } from 'crypto';
 
+const EMAIL_REGEX = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+
 export async function GET() {
   const user = await getCurrentUser();
   if (!requireAdmin(user)) {
@@ -33,6 +35,25 @@ export async function POST(req: NextRequest) {
 
   if (!name || !email || !password) {
     return NextResponse.json({ error: 'name, email, dan password wajib diisi' }, { status: 400 });
+  }
+
+  // H-3: Email format validation
+  if (!EMAIL_REGEX.test(email)) {
+    return NextResponse.json({ error: 'Format email tidak valid' }, { status: 400 });
+  }
+
+  // H-4: Input length validation
+  if (name.length > 100) {
+    return NextResponse.json({ error: 'Nama maksimal 100 karakter' }, { status: 400 });
+  }
+  if (email.length > 254) {
+    return NextResponse.json({ error: 'Email maksimal 254 karakter' }, { status: 400 });
+  }
+  if (password.length < 8) {
+    return NextResponse.json({ error: 'Password minimal 8 karakter' }, { status: 400 });
+  }
+  if (password.length > 72) {
+    return NextResponse.json({ error: 'Password maksimal 72 karakter' }, { status: 400 });
   }
 
   if (!['user', 'admin'].includes(role)) {

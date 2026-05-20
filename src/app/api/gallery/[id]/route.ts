@@ -56,6 +56,15 @@ export async function PATCH(
     return NextResponse.json({ error: 'Photos harus berupa array' }, { status: 400 });
   }
 
+  // H-7: Validate each photo URL starts with /uploads/
+  const invalidPhoto = photos.find((url: unknown) => typeof url !== 'string' || !url.startsWith('/uploads/'));
+  if (invalidPhoto !== undefined) {
+    return NextResponse.json(
+      { error: 'Setiap URL foto harus dimulai dengan /uploads/' },
+      { status: 400 }
+    );
+  }
+
   // Limit to 10 photos
   const limitedPhotos = photos.slice(0, 10);
 
@@ -93,6 +102,14 @@ export async function POST(
 
     if (!url) {
       return NextResponse.json({ error: 'URL foto diperlukan' }, { status: 400 });
+    }
+
+    // H-7: Validate photo URL starts with /uploads/
+    if (!String(url).startsWith('/uploads/')) {
+      return NextResponse.json(
+        { error: 'URL foto harus dimulai dengan /uploads/' },
+        { status: 400 }
+      );
     }
 
     const photos = invitation.gallery_photos ? JSON.parse(invitation.gallery_photos) : [];

@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { v4 as uuidv4 } from 'uuid';
 import { getDb } from '@/lib/db';
+import { rateLimit } from '@/lib/rateLimit';
 
 // GET /api/rsvp/[invitationId] - Get guests for an invitation (public)
 export async function GET(
@@ -36,6 +37,22 @@ export async function POST(
   req: NextRequest,
   { params }: { params: Promise<{ invitationId: string }> }
 ) {
+  // H-5: Rate limiting — max 3 RSVP per IP per hour
+  const ip =
+    req.headers.get('x-forwarded-for')?.split(',')[0].trim() ??
+    req.headers.get('x-real-ip') ??
+    'unknown';
+  const rl = rateLimit(`rsvp:${ip}`, 3, 60 * 60 * 1000);
+  if (rl.limited) {
+    return NextResponse.json(
+      { error: 'Terlalu banyak permintaan RSVP. Coba lagi nanti.' },
+      {
+        status: 429,
+        headers: { 'Retry-After': String(Math.ceil(rl.retryAfterMs / 1000)) },
+      }
+    );
+  }
+
   const { invitationId } = await params;
   const db = getDb();
 
@@ -55,13 +72,16 @@ export async function POST(
       return NextResponse.json({ error: 'Nama wajib diisi' }, { status: 400 });
     }
 
+    // H-5: Normalize guest name — trim + lowercase — before duplicate check
+    const normalizedName = body.name.trim().toLowerCase();
+
     const isAttending = body.is_attending ? 1 : 0;
     const guestCount = Math.max(1, Math.min(10, parseInt(body.guest_count) || 1));
 
-    // Check if guest already exists by name
+    // Check if guest already exists by normalized name
     const existingGuest = db.prepare(
-      'SELECT id FROM guests WHERE invitation_id = ? AND name = ?'
-    ).get(invitationId, body.name.trim()) as any;
+      'SELECT id FROM guests WHERE invitation_id = ? AND LOWER(TRIM(name)) = ?'
+    ).get(invitationId, normalizedName) as any;
 
     if (existingGuest) {
       // Update existing guest
@@ -73,7 +93,7 @@ export async function POST(
         WHERE id = ?
       `).run(isAttending, guestCount, body.message || null, existingGuest.id);
     } else {
-      // Insert new guest
+      // Insert new guest — store the trimmed (but original-case) name
       const id = uuidv4();
       db.prepare(`
         INSERT INTO guests (id, invitation_id, name, phone, is_attending, guest_count, message)

@@ -63,6 +63,17 @@ export async function PATCH(
 
   try {
     const body = await req.json();
+
+    // H-6: Validate maps_url starts with https://
+    if (body.maps_url !== undefined && body.maps_url !== null && body.maps_url !== '') {
+      if (!String(body.maps_url).startsWith('https://')) {
+        return NextResponse.json(
+          { error: 'maps_url harus dimulai dengan https://' },
+          { status: 400 }
+        );
+      }
+    }
+
     const allowedFields = [
       'title', 'partner_name', 'partner_name2', 'parent_name', 'parent_name2',
       'date_akad', 'date_resepsi', 'time_akad', 'time_resepsi',

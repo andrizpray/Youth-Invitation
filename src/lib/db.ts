@@ -3,16 +3,20 @@ import path from 'path';
 
 const DB_PATH = path.join(process.cwd(), 'data', 'youth-invitation.db');
 
-let db: Database.Database | null = null;
+// H-8: Use globalThis to persist the DB instance across hot reloads in dev
+declare global {
+  // eslint-disable-next-line no-var
+  var __db: Database.Database | undefined;
+}
 
 export function getDb(): Database.Database {
-  if (!db) {
-    db = new Database(DB_PATH);
-    db.pragma('journal_mode = WAL');
-    db.pragma('foreign_keys = ON');
-    initSchema(db);
+  if (!globalThis.__db) {
+    globalThis.__db = new Database(DB_PATH);
+    globalThis.__db.pragma('journal_mode = WAL');
+    globalThis.__db.pragma('foreign_keys = ON');
+    initSchema(globalThis.__db);
   }
-  return db;
+  return globalThis.__db;
 }
 
 function initSchema(db: Database.Database) {

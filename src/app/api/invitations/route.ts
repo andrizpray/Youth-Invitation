@@ -55,10 +55,14 @@ export async function POST(req: NextRequest) {
       return NextResponse.json({ error: 'Slug tidak tersedia, gunakan slug lain' }, { status: 400 });
     }
 
-    // Check slug uniqueness
-    const existing = db.prepare('SELECT id FROM invitations WHERE slug = ?').get(slug);
-    if (existing) {
-      return NextResponse.json({ error: 'Slug sudah digunakan, coba slug lain' }, { status: 409 });
+    // H-6: Validate maps_url starts with https://
+    if (body.maps_url !== undefined && body.maps_url !== null && body.maps_url !== '') {
+      if (!String(body.maps_url).startsWith('https://')) {
+        return NextResponse.json(
+          { error: 'maps_url harus dimulai dengan https://' },
+          { status: 400 }
+        );
+      }
     }
 
     const template = db.prepare(
@@ -86,26 +90,49 @@ export async function POST(req: NextRequest) {
     };
     const defaultColors = TEMPLATE_COLORS[template.slug] || '{"primary":"#d4af37","secondary":"#fff8e7","accent":"#1a1a2e"}';
 
-    db.prepare(`
-      INSERT INTO invitations (
-        id, user_id, slug, title, template_id, package_type,
-        partner_name, partner_name2, date_akad, time_akad,
-        location, address, maps_url, colors, font_family,
-        layout_style, event_date, language
-      ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
-    `).run(
-      id, user.id, slug, body.title || 'Undangan Pernikahan',
-      body.template_id, body.package_type || 'basic',
-      body.partner_name || '', body.partner_name2 || '',
-      body.date_akad || null, body.time_akad || null,
-      body.location || '', body.address || '',
-      body.maps_url || null,
-      body.colors || defaultColors,
-      body.font_family || 'serif',
-      body.layout_style || 'classic',
-      body.event_date || null,
-      body.language || 'id'
-    );
+    // H-1: Wrap INSERT in try/catch and handle UNIQUE constraint error explicitly.
+    // The pre-check SELECT is kept as a fast path, but the real guard is the
+    // constraint catch below — eliminating the race window between check and insert.
+    const existing = db.prepare('SELECT id FROM invitations WHERE slug = ?').get(slug);
+    if (existing) {
+      return NextResponse.json({ error: 'Slug sudah digunakan, coba slug lain' }, { status: 409 });
+    }
+
+    try {
+      db.prepare(`
+        INSERT INTO invitations (
+          id, user_id, slug, title, template_id, package_type,
+          partner_name, partner_name2, date_akad, time_akad,
+          location, address, maps_url, colors, font_family,
+          layout_style, event_date, language
+        ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+      `).run(
+        id, user.id, slug, body.title || 'Undangan Pernikahan',
+        body.template_id, body.package_type || 'basic',
+        body.partner_name || '', body.partner_name2 || '',
+        body.date_akad || null, body.time_akad || null,
+        body.location || '', body.address || '',
+        body.maps_url || null,
+        body.colors || defaultColors,
+        body.font_family || 'serif',
+        body.layout_style || 'classic',
+        body.event_date || null,
+        body.language || 'id'
+      );
+    } catch (insertError: any) {
+      // SQLite UNIQUE constraint violation code is 'SQLITE_CONSTRAINT_UNIQUE'
+      // or the message contains 'UNIQUE constraint failed'
+      if (
+        insertError?.code === 'SQLITE_CONSTRAINT_UNIQUE' ||
+        insertError?.message?.includes('UNIQUE constraint failed')
+      ) {
+        return NextResponse.json(
+          { error: 'Slug sudah digunakan, coba slug lain' },
+          { status: 409 }
+        );
+      }
+      throw insertError;
+    }
 
     return NextResponse.json({
       success: true,
