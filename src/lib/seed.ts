@@ -12,29 +12,53 @@ const templates = [
   { name: 'Minimalist White', slug: 'minimalist-white', description: 'Desain minimalis bersih dengan sentuhan hitam', category: 'modern', colors: '{"primary":"#333333","secondary":"#ffffff","accent":"#000000"}' },
   { name: 'Sakura Pink', slug: 'sakura-pink', description: 'Inspirasi bunga sakura Jepang', category: 'romantic', colors: '{"primary":"#f48fb1","secondary":"#fce4ec","accent":"#4a148c"}' },
   { name: 'Royal Purple', slug: 'royal-purple', description: 'Nuansa ungu kerajaan yang mewah', category: 'klasik', colors: '{"primary":"#6a1b9a","secondary":"#f3e5f5","accent":"#12005e"}' },
+  { name: 'Islami Elegant', slug: 'islami-elegant', description: 'Tema islami elegan dengan latar navy gelap dan aksen emas', category: 'islami', colors: '{"primary":"#c9a84c","secondary":"#0a1628","accent":"#e8d5a3"}' },
+  { name: 'Modern Minimal', slug: 'modern-minimal', description: 'Desain modern minimalis bersih dengan tipografi ringan', category: 'modern', colors: '{"primary":"#2d2d2d","secondary":"#f8f8f8","accent":"#888888"}' },
 ];
 
 export async function seedTemplates() {
   const db = getDb();
 
   const count = db.prepare('SELECT COUNT(*) as count FROM templates').get() as any;
-  if (count.count > 0) {
-    console.log(`[Seed] Templates already exist (${count.count}), skipping...`);
+  if (count.count === 0) {
+    // Fresh DB — insert all templates
+    const insert = db.prepare(
+      'INSERT INTO templates (id, name, slug, description, category) VALUES (?, ?, ?, ?, ?)'
+    );
+    const insertAll = db.transaction(() => {
+      for (const t of templates) {
+        insert.run(uuidv4(), t.name, t.slug, t.description, t.category);
+      }
+    });
+    insertAll();
+    console.log(`[Seed] Inserted ${templates.length} templates`);
     return;
   }
 
+  // DB already has templates — upsert any that are missing by slug
+  const getBySlug = db.prepare('SELECT id FROM templates WHERE slug = ?');
   const insert = db.prepare(
     'INSERT INTO templates (id, name, slug, description, category) VALUES (?, ?, ?, ?, ?)'
   );
 
-  const result = db.transaction(() => {
+  const upsertMissing = db.transaction(() => {
+    let inserted = 0;
     for (const t of templates) {
-      insert.run(uuidv4(), t.name, t.slug, t.description, t.category);
+      const existing = getBySlug.get(t.slug);
+      if (!existing) {
+        insert.run(uuidv4(), t.name, t.slug, t.description, t.category);
+        inserted++;
+        console.log(`[Seed] Inserted missing template: ${t.slug}`);
+      }
+    }
+    if (inserted === 0) {
+      console.log(`[Seed] All templates already present (${count.count}), nothing to insert.`);
+    } else {
+      console.log(`[Seed] Inserted ${inserted} missing template(s).`);
     }
   });
 
-  result();
-  console.log(`[Seed] Inserted ${templates.length} templates`);
+  upsertMissing();
 }
 
 export { templates };

@@ -6,6 +6,8 @@ import { InvitationData, GuestData, RsvpForm } from '@/components/templates/type
 import ClassicGold from '@/components/templates/ClassicGold';
 import RomanticBlush from '@/components/templates/RomanticBlush';
 import IslamicGreen from '@/components/templates/IslamicGreen';
+import IslamiElegant from '@/components/templates/IslamiElegant';
+import ModernMinimal from '@/components/templates/ModernMinimal';
 
 type RsvpStatus = 'idle' | 'submitting' | 'success' | 'error';
 
@@ -105,6 +107,12 @@ function TemplateRenderer({
   }
   if (templateSlug === 'islamic-green') {
     return <IslamicGreen {...props} />;
+  }
+  if (templateSlug === 'islami-elegant') {
+    return <IslamiElegant {...props} />;
+  }
+  if (templateSlug === 'modern-minimal') {
+    return <ModernMinimal {...props} />;
   }
   // Default: classic-gold and everything else
   return <ClassicGold {...props} />;
