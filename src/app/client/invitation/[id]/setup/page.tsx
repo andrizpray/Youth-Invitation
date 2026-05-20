@@ -602,14 +602,23 @@ export default function ClientSetupWizard() {
             <div className="bg-white rounded-2xl p-6 border border-gray-200">
               <h2 className="text-lg font-semibold text-gray-900 mb-1">Pratinjau</h2>
               <p className="text-sm text-gray-500 mb-4">Lihat tampilan undanganmu</p>
-              <a
-                href={previewUrl}
-                target="_blank"
-                rel="noopener noreferrer"
-                className="inline-flex items-center gap-2 px-5 py-3 bg-gray-900 hover:bg-gray-800 text-white rounded-xl font-medium text-sm transition-all"
-              >
-                👁️ Lihat Undangan
-              </a>
+              {slug ? (
+                <a
+                  href={`/${slug}`}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="inline-flex items-center gap-2 px-5 py-3 bg-gray-900 hover:bg-gray-800 text-white rounded-xl font-medium text-sm transition-all"
+                >
+                  👁️ Lihat Undangan
+                </a>
+              ) : (
+                <button
+                  disabled
+                  className="inline-flex items-center gap-2 px-5 py-3 bg-gray-300 text-gray-500 rounded-xl font-medium text-sm cursor-not-allowed"
+                >
+                  👁️ Lihat Undangan
+                </button>
+              )}
             </div>
 
             {/* Publish */}

@@ -90,11 +90,11 @@ export async function POST(
         try {
           insert.run(id, invitationId, g.name.trim(), g.email || null, g.phone || null, code);
           results.push({ name: g.name.trim(), code });
-        } catch (e: any) {
-          if (e.code === 'SQLITE_CONSTRAINT_UNIQUE') {
+        } catch (e: unknown) {
+          if ((e as { code?: string }).code === 'SQLITE_CONSTRAINT_UNIQUE') {
             errors.push(`${g.name}: kode duplikat, coba lagi`);
           } else {
-            errors.push(`${g.name}: ${e.message}`);
+            errors.push(`${g.name}: ${(e as { message?: string }).message ?? 'unknown error'}`);
           }
         }
       }

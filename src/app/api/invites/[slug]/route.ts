@@ -9,14 +9,20 @@ export async function GET(
   const { slug } = await params;
   const db = getDb();
 
-  const inv = db.prepare('SELECT * FROM invitations WHERE slug = ? AND status = ?').get(slug, 'active') as any;
+  const inv = db.prepare('SELECT * FROM invitations WHERE slug = ? AND status = ?').get(slug, 'active') as import('@/lib/types').Invitation | undefined;
 
   if (!inv) {
     return NextResponse.json({ error: 'Undangan tidak ditemukan' }, { status: 404 });
   }
 
   // Get template info
-  const template = db.prepare('SELECT * FROM templates WHERE id = ?').get(inv.template_id) as any;
+  const template = db.prepare('SELECT * FROM templates WHERE id = ?').get(inv.template_id) as import('@/lib/types').Template | undefined;
 
-  return NextResponse.json({ invitation: inv, template });
+  const corsHeaders = {
+    'Access-Control-Allow-Origin': '*',
+    'Access-Control-Allow-Methods': 'GET, OPTIONS',
+    'Access-Control-Allow-Headers': 'Content-Type',
+  };
+
+  return NextResponse.json({ invitation: inv, template }, { headers: corsHeaders });
 }

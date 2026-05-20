@@ -1,4 +1,4 @@
-import jwt from 'jsonwebtoken';
+import { SignJWT, jwtVerify } from 'jose';
 import bcrypt from 'bcryptjs';
 import { cookies } from 'next/headers';
 import { getDb } from './db';
@@ -6,6 +6,7 @@ import { User } from './types';
 
 const JWT_SECRET = process.env.JWT_SECRET;
 if (!JWT_SECRET) throw new Error('JWT_SECRET environment variable is not set');
+const SECRET_KEY = new TextEncoder().encode(JWT_SECRET);
 const SALT_ROUNDS = 10;
 const COOKIE_NAME = 'auth_token';
 
@@ -17,17 +18,17 @@ export async function verifyPassword(password: string, hash: string): Promise<bo
   return bcrypt.compare(password, hash);
 }
 
-export function generateToken(user: { id: string; email: string; role: string }): string {
-  return jwt.sign(
-    { id: user.id, email: user.email, role: user.role },
-    JWT_SECRET,
-    { expiresIn: '7d' }
-  );
+export async function generateToken(user: { id: string; email: string; role: string }): Promise<string> {
+  return new SignJWT({ id: user.id, email: user.email, role: user.role })
+    .setProtectedHeader({ alg: 'HS256' })
+    .setExpirationTime('7d')
+    .sign(SECRET_KEY);
 }
 
-export function verifyToken(token: string): { id: string; email: string; role: string } | null {
+export async function verifyToken(token: string): Promise<{ id: string; email: string; role: string } | null> {
   try {
-    return jwt.verify(token, JWT_SECRET) as { id: string; email: string; role: string };
+    const { payload } = await jwtVerify(token, SECRET_KEY);
+    return payload as { id: string; email: string; role: string };
   } catch {
     return null;
   }
@@ -61,7 +62,7 @@ export async function getCurrentUser(): Promise<User | null> {
     const token = cookieStore.get(COOKIE_NAME)?.value;
     if (!token) return null;
 
-    const payload = verifyToken(token);
+    const payload = await verifyToken(token);
     if (!payload) return null;
 
     const db = getDb();

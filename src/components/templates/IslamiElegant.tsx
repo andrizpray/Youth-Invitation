@@ -118,12 +118,12 @@ export default function IslamiElegant({ invitation, guests, onRsvpSubmit, rsvpSt
           {invitation.partner_name}
         </h1>
         <p className="text-4xl my-3" style={{ color: gold }}>✦</p>
-        <h1
+        <h2
           className="text-5xl md:text-6xl mb-8 leading-tight"
           style={{ color: cream, fontFamily: 'Georgia, serif', fontWeight: 400 }}
         >
           {invitation.partner_name2}
-        </h1>
+        </h2>
 
         <OrnamentDivider color={gold} />
 
@@ -361,7 +361,7 @@ export default function IslamiElegant({ invitation, guests, onRsvpSubmit, rsvpSt
                 className="aspect-square rounded-xl overflow-hidden"
                 style={{ border: `1px solid ${gold}44` }}
               >
-                <img src={url} alt={`Foto ${i + 1}`} className="w-full h-full object-cover" />
+                <img src={url} alt={`Foto ${i + 1}`} className="w-full h-full object-cover" loading="lazy" />
               </div>
             ))}
           </div>

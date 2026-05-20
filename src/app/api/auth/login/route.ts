@@ -47,7 +47,7 @@ export async function POST(req: NextRequest) {
       return NextResponse.json({ error: 'Email atau password salah' }, { status: 401 });
     }
 
-    const token = generateToken({ id: user.id, email: user.email, role: user.role });
+    const token = await generateToken({ id: user.id, email: user.email, role: user.role });
     await setAuthCookie(token);
 
     return NextResponse.json({

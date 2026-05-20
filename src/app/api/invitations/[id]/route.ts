@@ -1,6 +1,16 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { getDb } from '@/lib/db';
 import { getCurrentUser } from '@/lib/auth';
+import { Invitation } from '@/lib/types';
+
+interface GuestCount {
+  total: number;
+  attending: number;
+}
+
+interface TemplateRow {
+  slug: string;
+}
 
 // GET /api/invitations/[id] - Get single invitation
 export async function GET(
@@ -11,7 +21,7 @@ export async function GET(
   const { id } = await params;
 
   const db = getDb();
-  const invitation = db.prepare('SELECT * FROM invitations WHERE id = ?').get(id) as any;
+  const invitation = db.prepare('SELECT * FROM invitations WHERE id = ?').get(id) as Invitation | undefined;
 
   if (!invitation) {
     return NextResponse.json({ error: 'Undangan tidak ditemukan' }, { status: 404 });
@@ -30,7 +40,7 @@ export async function GET(
   // Get guest count
   const guestCount = db.prepare(
     'SELECT COUNT(*) as total, SUM(CASE WHEN is_attending = 1 THEN 1 ELSE 0 END) as attending FROM guests WHERE invitation_id = ?'
-  ).get(id) as any;
+  ).get(id) as GuestCount | undefined;
 
   return NextResponse.json({
     ...invitation,
@@ -52,7 +62,7 @@ export async function PATCH(
   const { id } = await params;
   const db = getDb();
 
-  const invitation = db.prepare('SELECT * FROM invitations WHERE id = ? AND user_id = ?').get(id, user.id) as any;
+  const invitation = db.prepare('SELECT * FROM invitations WHERE id = ? AND user_id = ?').get(id, user.id) as Invitation | undefined;
   if (!invitation) {
     return NextResponse.json({ error: 'Undangan tidak ditemukan' }, { status: 404 });
   }
@@ -82,7 +92,7 @@ export async function PATCH(
     // Jika template_id diganti dan colors tidak diset manual,
     // otomatis pakai warna default dari template baru
     if (body.template_id && body.colors === undefined) {
-      const tmpl = db.prepare('SELECT slug FROM templates WHERE id = ?').get(body.template_id) as any;
+      const tmpl = db.prepare('SELECT slug FROM templates WHERE id = ?').get(body.template_id) as TemplateRow | undefined;
       const TEMPLATE_COLORS: Record<string, string> = {
         'classic-gold':    '{"primary":"#d4af37","secondary":"#fff8e7","accent":"#1a1a2e"}',
         'romantic-blush':  '{"primary":"#e8a0bf","secondary":"#fdf2f8","accent":"#4a1942"}',
@@ -103,7 +113,7 @@ export async function PATCH(
     }
 
     const updates: string[] = [];
-    const values: any[] = [];
+    const values: (string | number | null)[] = [];
 
     for (const field of allowedFields) {
       if (body[field] !== undefined) {
@@ -142,7 +152,7 @@ export async function DELETE(
   const { id } = await params;
   const db = getDb();
 
-  const invitation = db.prepare('SELECT * FROM invitations WHERE id = ? AND user_id = ?').get(id, user.id) as any;
+  const invitation = db.prepare('SELECT * FROM invitations WHERE id = ? AND user_id = ?').get(id, user.id) as Invitation | undefined;
   if (!invitation) {
     return NextResponse.json({ error: 'Undangan tidak ditemukan' }, { status: 404 });
   }

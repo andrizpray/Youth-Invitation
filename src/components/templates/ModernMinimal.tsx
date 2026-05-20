@@ -143,12 +143,12 @@ export default function ModernMinimal({ invitation, guests, onRsvpSubmit, rsvpSt
           <div style={{ height: '1px', flex: 1, backgroundColor: `${offWhite}33` }} />
         </div>
 
-        <h1
+        <h2
           className="font-extralight mb-12 leading-none"
           style={{ color: offWhite, fontSize: 'clamp(2.5rem, 10vw, 4rem)', letterSpacing: '-0.02em' }}
         >
           {invitation.partner_name2}
-        </h1>
+        </h2>
 
         {/* Date pill */}
         {targetDate && (
@@ -314,13 +314,13 @@ export default function ModernMinimal({ invitation, guests, onRsvpSubmit, rsvpSt
             {/* First photo full-width if odd count, else grid */}
             {photos.length === 1 ? (
               <div className="w-full aspect-video rounded-sm overflow-hidden" style={{ border: `1px solid ${nearBlack}11` }}>
-                <img src={photos[0]} alt="Foto 1" className="w-full h-full object-cover" />
+                <img src={photos[0]} alt="Foto 1" className="w-full h-full object-cover" loading="lazy" />
               </div>
             ) : (
               <div className="space-y-2">
                 {/* Top: first photo full width */}
                 <div className="w-full overflow-hidden" style={{ aspectRatio: '16/9', borderRadius: '2px', border: `1px solid ${nearBlack}11` }}>
-                  <img src={photos[0]} alt="Foto 1" className="w-full h-full object-cover" />
+                  <img src={photos[0]} alt="Foto 1" className="w-full h-full object-cover" loading="lazy" />
                 </div>
                 {/* Rest: 2-column grid */}
                 {photos.length > 1 && (
@@ -335,7 +335,7 @@ export default function ModernMinimal({ invitation, guests, onRsvpSubmit, rsvpSt
                           border: `1px solid ${nearBlack}11`,
                         }}
                       >
-                        <img src={url} alt={`Foto ${i + 2}`} className="w-full h-full object-cover" />
+                        <img src={url} alt={`Foto ${i + 2}`} className="w-full h-full object-cover" loading="lazy" />
                       </div>
                     ))}
                   </div>

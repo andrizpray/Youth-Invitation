@@ -16,10 +16,10 @@ export async function GET(req: NextRequest) {
     ).all(user.id);
 
     // Count guests for each invitation
-    const result = invitations.map((inv: any) => {
+    const result = (invitations as { id: string }[]).map((inv) => {
       const guestCount = db.prepare(
         'SELECT COUNT(*) as total FROM guests WHERE invitation_id = ?'
-      ).get(inv.id) as any;
+      ).get(inv.id) as { total: number };
       return { ...inv, total_guests: guestCount?.total || 0 };
     });
 
@@ -72,7 +72,7 @@ export async function POST(req: NextRequest) {
 
     const template = db.prepare(
       'SELECT id, slug FROM templates WHERE id = ? AND is_active = 1'
-    ).get(body.template_id) as any;
+    ).get(body.template_id) as { id: string; slug: string } | undefined;
 
     if (!template) {
       return NextResponse.json({ error: 'Template tidak ditemukan' }, { status: 400 });
@@ -124,12 +124,12 @@ export async function POST(req: NextRequest) {
         body.event_date || null,
         body.language || 'id'
       );
-    } catch (insertError: any) {
+    } catch (insertError: unknown) {
       // SQLite UNIQUE constraint violation code is 'SQLITE_CONSTRAINT_UNIQUE'
       // or the message contains 'UNIQUE constraint failed'
       if (
-        insertError?.code === 'SQLITE_CONSTRAINT_UNIQUE' ||
-        insertError?.message?.includes('UNIQUE constraint failed')
+        (insertError as { code?: string; message?: string })?.code === 'SQLITE_CONSTRAINT_UNIQUE' ||
+        (insertError as { code?: string; message?: string })?.message?.includes('UNIQUE constraint failed')
       ) {
         return NextResponse.json(
           { error: 'Slug sudah digunakan, coba slug lain' },
