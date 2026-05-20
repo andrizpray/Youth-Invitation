@@ -117,8 +117,13 @@ export async function PATCH(
 
     for (const field of allowedFields) {
       if (body[field] !== undefined) {
+        // Bugfix: coerce boolean 'published' to integer for SQLite
+        let val = body[field];
+        if (field === 'published' && typeof val === 'boolean') {
+          val = val ? 1 : 0;
+        }
         updates.push(`${field} = ?`);
-        values.push(body[field]);
+        values.push(val);
       }
     }
 

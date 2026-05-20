@@ -15,10 +15,17 @@ export async function GET(
   const { id } = await params;
   const db = getDb();
 
-  // Verify ownership
-  const invitation = db.prepare(
-    'SELECT id, slug, partner_name, partner_name2, event_date FROM invitations WHERE id = ? AND user_id = ?'
-  ).get(id, user.id);
+  // Verify ownership (admin can view any invitation)
+  let invitation;
+  if (user.role === 'admin') {
+    invitation = db.prepare(
+      'SELECT id, slug, partner_name, partner_name2, event_date FROM invitations WHERE id = ?'
+    ).get(id);
+  } else {
+    invitation = db.prepare(
+      'SELECT id, slug, partner_name, partner_name2, event_date FROM invitations WHERE id = ? AND user_id = ?'
+    ).get(id, user.id);
+  }
 
   if (!invitation) {
     return NextResponse.json({ error: 'Undangan tidak ditemukan' }, { status: 404 });
