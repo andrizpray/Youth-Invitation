@@ -22,6 +22,11 @@ export async function GET(
     return NextResponse.json({ error: 'Undangan tidak ditemukan' }, { status: 404 });
   }
 
+  // Ownership check: logged-in non-admin users can only access their own invitations
+  if (user && user.role !== 'admin' && invitation.user_id !== user.id) {
+    return NextResponse.json({ error: 'Undangan tidak ditemukan' }, { status: 404 });
+  }
+
   // Get guest count
   const guestCount = db.prepare(
     'SELECT COUNT(*) as total, SUM(CASE WHEN is_attending = 1 THEN 1 ELSE 0 END) as attending FROM guests WHERE invitation_id = ?'

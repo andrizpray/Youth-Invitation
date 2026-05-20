@@ -1,9 +1,9 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { jwtVerify } from 'jose';
 
-const JWT_SECRET = new TextEncoder().encode(
-  process.env.JWT_SECRET || 'youth-invitation-secret-key-change-in-production'
-);
+const jwtSecret = process.env.JWT_SECRET;
+if (!jwtSecret) throw new Error('JWT_SECRET environment variable is not set');
+const JWT_SECRET = new TextEncoder().encode(jwtSecret);
 
 export async function middleware(req: NextRequest) {
   const { pathname } = req.nextUrl;
@@ -26,11 +26,11 @@ export async function middleware(req: NextRequest) {
   };
 
   // Verify token
-  let payload: { userId: string; role: string } | null = null;
+  let payload: { id: string; role: string } | null = null;
   if (token) {
     try {
       const { payload: p } = await jwtVerify(token, JWT_SECRET);
-      payload = p as { userId: string; role: string };
+      payload = p as { id: string; role: string };
     } catch {
       // invalid token
     }

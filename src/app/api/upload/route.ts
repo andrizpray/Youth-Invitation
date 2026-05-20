@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { writeFile, mkdir } from 'fs/promises';
+import { writeFile, mkdir, unlink } from 'fs/promises';
 import { existsSync } from 'fs';
 import path from 'path';
 import { getCurrentUser } from '@/lib/auth';
@@ -8,6 +8,8 @@ const UPLOAD_DIR = path.join(process.cwd(), 'public', 'uploads');
 const MAX_FILE_SIZE = 10 * 1024 * 1024; // 10MB
 const ALLOWED_IMAGE_TYPES = ['image/jpeg', 'image/png', 'image/webp', 'image/gif'];
 const ALLOWED_AUDIO_TYPES = ['audio/mpeg', 'audio/mp3', 'audio/wav', 'audio/ogg', 'audio/m4a'];
+const ALLOWED_IMAGE_MAGIC = ['image/jpeg', 'image/png', 'image/webp', 'image/gif'];
+const ALLOWED_AUDIO_MAGIC = ['audio/mpeg', 'audio/wav', 'audio/ogg', 'audio/m4a', 'audio/x-m4a'];
 
 // POST - Upload file
 export async function POST(req: NextRequest) {
@@ -30,11 +32,25 @@ export async function POST(req: NextRequest) {
       return NextResponse.json({ error: 'File terlalu besar (max 10MB)' }, { status: 400 });
     }
 
-    // Validate file type
+    // Validate file type from Content-Type header
     const allowedTypes = type === 'music' ? ALLOWED_AUDIO_TYPES : ALLOWED_IMAGE_TYPES;
     if (!allowedTypes.includes(file.type)) {
-      return NextResponse.json({ 
-        error: `Tipe file tidak didukung. Allowed: ${allowedTypes.join(', ')}` 
+      return NextResponse.json({
+        error: `Tipe file tidak didukung. Allowed: ${allowedTypes.join(', ')}`,
+      }, { status: 400 });
+    }
+
+    // Read file buffer once — reuse for magic bytes check and writing
+    const arrayBuffer = await file.arrayBuffer();
+    const buffer = Buffer.from(arrayBuffer);
+
+    // C5: Validate actual MIME type from magic bytes (prevent Content-Type spoofing)
+    const { fileTypeFromBuffer } = await import('file-type');
+    const detected = await fileTypeFromBuffer(buffer);
+    const allowedMagic = type === 'music' ? ALLOWED_AUDIO_MAGIC : ALLOWED_IMAGE_MAGIC;
+    if (!detected || !allowedMagic.includes(detected.mime)) {
+      return NextResponse.json({
+        error: 'Konten file tidak sesuai dengan tipe yang diizinkan',
       }, { status: 400 });
     }
 
@@ -45,16 +61,14 @@ export async function POST(req: NextRequest) {
       await mkdir(uploadPath, { recursive: true });
     }
 
-    // Generate unique filename
-    const ext = file.name.split('.').pop() || 'bin';
+    // Generate unique filename using detected extension (not user-supplied)
+    const ext = detected.ext;
     const timestamp = Date.now();
     const randomStr = Math.random().toString(36).substring(2, 8);
     const filename = `${timestamp}-${randomStr}.${ext}`;
     const filePath = path.join(uploadPath, filename);
 
     // Write file
-    const bytes = await file.arrayBuffer();
-    const buffer = Buffer.from(bytes);
     await writeFile(filePath, buffer);
 
     // Return public URL
@@ -65,9 +79,9 @@ export async function POST(req: NextRequest) {
       url: publicUrl,
       filename,
       size: file.size,
-      type: file.type,
+      type: detected.mime,
     });
-  } catch (error: any) {
+  } catch (error: unknown) {
     console.error('Upload error:', error);
     return NextResponse.json({ error: 'Gagal mengupload file' }, { status: 500 });
   }
@@ -88,16 +102,19 @@ export async function DELETE(req: NextRequest) {
       return NextResponse.json({ error: 'URL tidak valid' }, { status: 400 });
     }
 
-    const filePath = path.join(process.cwd(), 'public', url);
-    
+    // C4: Prevent path traversal — resolve and verify path stays inside /uploads/
+    const uploadBase = path.resolve(path.join(process.cwd(), 'public', 'uploads'));
+    const resolved = path.resolve(path.join(process.cwd(), 'public', url));
+    if (!resolved.startsWith(uploadBase + path.sep)) {
+      return NextResponse.json({ error: 'URL tidak valid' }, { status: 400 });
+    }
+
     // Check if file exists
-    if (!existsSync(filePath)) {
+    if (!existsSync(resolved)) {
       return NextResponse.json({ error: 'File tidak ditemukan' }, { status: 404 });
     }
 
-    // Delete file using unlink
-    const { unlink } = await import('fs/promises');
-    await unlink(filePath);
+    await unlink(resolved);
 
     return NextResponse.json({ success: true });
   } catch (error) {

@@ -4,7 +4,8 @@ import { cookies } from 'next/headers';
 import { getDb } from './db';
 import { User } from './types';
 
-const JWT_SECRET = process.env.JWT_SECRET || 'youth-invitation-secret-key-change-in-production';
+const JWT_SECRET = process.env.JWT_SECRET;
+if (!JWT_SECRET) throw new Error('JWT_SECRET environment variable is not set');
 const SALT_ROUNDS = 10;
 const COOKIE_NAME = 'auth_token';
 
