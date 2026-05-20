@@ -199,7 +199,7 @@ export default function AnalyticsPage() {
       </div>
 
       {/* Timeline Chart */}
-      {timeline.length > 0 && (
+      {timeline.length > 0 ? (
         <div className="bg-white rounded-2xl p-6 border border-gray-100 mb-6">
           <h2 className="font-semibold text-gray-900 mb-4">Timeline RSVP</h2>
           <div className="flex items-end gap-1 h-32">
@@ -221,6 +221,10 @@ export default function AnalyticsPage() {
               </>
             )}
           </div>
+        </div>
+      ) : (
+        <div className="bg-white rounded-2xl p-6 border border-gray-100 mb-6 text-center">
+          <p className="text-gray-400 text-sm">Belum ada data RSVP untuk timeline</p>
         </div>
       )}
 

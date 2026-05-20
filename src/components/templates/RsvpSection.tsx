@@ -73,7 +73,7 @@ export default function RsvpSection({
               onClick={() => setForm({ ...form, is_attending: false })}
               className="flex-1 py-3 rounded-xl text-sm font-medium transition-all"
               style={!form.is_attending
-                ? { backgroundColor: '#ef4444', color: '#fff' }
+                ? { backgroundColor: '#dc2626', color: '#fff' }
                 : { border: `1px solid ${primaryColor}44`, color: accentColor }}
             >
               ❌ Tidak Hadir
@@ -133,8 +133,8 @@ export default function RsvpSection({
                   <span
                     className="text-xs px-2 py-0.5 rounded-full"
                     style={g.is_attending
-                      ? { backgroundColor: '#dcfce7', color: '#166534' }
-                      : { backgroundColor: '#fee2e2', color: '#991b1b' }}
+                      ? { backgroundColor: primaryColor + '22', color: primaryColor }
+                      : { backgroundColor: '#dc2626' + '22', color: '#dc2626' }}
                   >
                     {g.is_attending ? 'Hadir' : 'Tidak Hadir'}
                   </span>

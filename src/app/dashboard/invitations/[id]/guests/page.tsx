@@ -55,7 +55,7 @@ export default function GuestsPage() {
       setGuests(data.guests || []);
       setInvitation(data.invitation || null);
     } catch {
-      console.error('Failed to load guests');
+      setGuestError('Gagal memuat daftar tamu');
     } finally {
       setLoading(false);
     }

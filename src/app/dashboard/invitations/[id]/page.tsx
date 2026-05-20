@@ -188,6 +188,7 @@ export default function EditInvitationPage() {
                 type="text"
                 value={form.partner_name}
                 onChange={(e) => setForm({ ...form, partner_name: e.target.value })}
+                required
                 className="w-full px-4 py-3 border border-gray-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-amber-400 transition-all"
               />
             </div>
@@ -197,6 +198,7 @@ export default function EditInvitationPage() {
                 type="text"
                 value={form.partner_name2}
                 onChange={(e) => setForm({ ...form, partner_name2: e.target.value })}
+                required
                 className="w-full px-4 py-3 border border-gray-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-amber-400 transition-all"
               />
             </div>
