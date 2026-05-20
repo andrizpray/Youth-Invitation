@@ -76,9 +76,13 @@ export default function EditInvitationPage() {
       .finally(() => setLoading(false));
   }, [params.id]);
 
+  const [saveError, setSaveError] = useState('');
+  const [showPublishError, setShowPublishError] = useState('');
+
   const handleSave = async () => {
     setSaving(true);
     setSaved(false);
+    setSaveError('');
     try {
       const res = await fetch(`/api/invitations/${params.id}`, {
         method: 'PATCH',
@@ -86,9 +90,16 @@ export default function EditInvitationPage() {
         body: JSON.stringify(form),
       });
       if (res.ok) {
+        const updated = await res.json();
+        setInvitation(prev => prev ? { ...prev, ...updated.invitation } : prev);
         setSaved(true);
         setTimeout(() => setSaved(false), 3000);
+      } else {
+        const err = await res.json();
+        setSaveError(err.error || 'Gagal menyimpan');
       }
+    } catch (e) {
+      setSaveError('Terjadi kesalahan koneksi');
     } finally {
       setSaving(false);
     }
@@ -146,8 +157,14 @@ export default function EditInvitationPage() {
         </button>
       </div>
 
+      {saveError && (
+        <div className="mb-4 p-3 bg-red-50 border border-red-200 text-red-700 text-sm rounded-xl">
+          ❌ {saveError}
+        </div>
+      )}
+
       {/* Tabs */}
-      <div className="flex gap-1 mb-6 bg-gray-100 p-1 rounded-xl w-fit">
+      <div className="flex gap-1 mb-6 bg-gray-100 p-1 rounded-xl overflow-x-auto whitespace-nowrap">
         {tabs.map((t) => (
           <button
             key={t.id}
@@ -440,15 +457,31 @@ export default function EditInvitationPage() {
             </p>
           </div>
 
+          {showPublishError && (
+            <div className="p-3 bg-red-50 border border-red-200 text-red-700 text-sm rounded-xl">
+              ❌ {showPublishError}
+            </div>
+          )}
+
           {!invitation.published && (
             <button
               onClick={async () => {
-                await fetch(`/api/invitations/${params.id}`, {
-                  method: 'PATCH',
-                  headers: { 'Content-Type': 'application/json' },
-                  body: JSON.stringify({ published: 1, status: 'active' }),
-                });
-                router.refresh();
+                setShowPublishError('');
+                try {
+                  const res = await fetch(`/api/invitations/${params.id}`, {
+                    method: 'PATCH',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ published: 1, status: 'active' }),
+                  });
+                  if (!res.ok) {
+                    const err = await res.json();
+                    setShowPublishError(err.error || 'Gagal mempublikasikan');
+                    return;
+                  }
+                  router.refresh();
+                } catch (e) {
+                  setShowPublishError('Terjadi kesalahan koneksi');
+                }
               }}
               className="px-6 py-3 bg-green-500 hover:bg-green-600 text-white rounded-xl font-semibold transition-all"
             >

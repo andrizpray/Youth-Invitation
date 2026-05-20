@@ -20,12 +20,13 @@ export default function InvitationsPage() {
   const [invitations, setInvitations] = useState<Invitation[]>([]);
   const [loading, setLoading] = useState(true);
   const [copiedId, setCopiedId] = useState<string | null>(null);
+  const [actionError, setActionError] = useState('');
 
   const loadInvitations = () => {
-    setLoading(true);
     fetch('/api/invitations')
       .then(res => res.json())
       .then(data => setInvitations(data.invitations || []))
+      .catch(() => setActionError('Gagal memuat daftar undangan'))
       .finally(() => setLoading(false));
   };
 
@@ -33,17 +34,35 @@ export default function InvitationsPage() {
 
   const handleDelete = async (id: string) => {
     if (!confirm('Hapus undangan ini?')) return;
-    await fetch(`/api/invitations/${id}`, { method: 'DELETE' });
-    loadInvitations();
+    try {
+      const res = await fetch(`/api/invitations/${id}`, { method: 'DELETE' });
+      if (!res.ok) {
+        const err = await res.json();
+        setActionError(err.error || 'Gagal menghapus');
+        return;
+      }
+      loadInvitations();
+    } catch {
+      setActionError('Gagal menghapus undangan');
+    }
   };
 
   const handlePublish = async (id: string) => {
-    await fetch(`/api/invitations/${id}`, {
-      method: 'PATCH',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ published: 1, status: 'active' }),
-    });
-    loadInvitations();
+    try {
+      const res = await fetch(`/api/invitations/${id}`, {
+        method: 'PATCH',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ published: 1, status: 'active' }),
+      });
+      if (!res.ok) {
+        const err = await res.json();
+        setActionError(err.error || 'Gagal mempublikasikan');
+        return;
+      }
+      loadInvitations();
+    } catch {
+      setActionError('Gagal mempublikasikan undangan');
+    }
   };
 
   const handleCopy = (slug: string, id: string) => {
@@ -85,6 +104,12 @@ export default function InvitationsPage() {
           + Buat Baru
         </Link>
       </div>
+
+      {actionError && (
+        <div className="mb-4 p-3 bg-red-50 border border-red-200 text-red-700 text-sm rounded-xl">
+          ❌ {actionError}
+        </div>
+      )}
 
       {invitations.length === 0 ? (
         <div className="bg-white rounded-2xl p-12 border border-gray-100 text-center">

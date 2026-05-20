@@ -31,6 +31,7 @@ export default function GuestsPage() {
   const [showAddForm, setShowAddForm] = useState(false);
   const [showCsvModal, setShowCsvModal] = useState(false);
   const [copiedCode, setCopiedCode] = useState<string | null>(null);
+  const [guestError, setGuestError] = useState('');
 
   // Form states
   const [formName, setFormName] = useState('');
@@ -120,10 +121,10 @@ export default function GuestsPage() {
       if (data.waLink) {
         window.open(data.waLink, '_blank');
       } else {
-        alert(data.error || 'Gagal membuat link WhatsApp');
+        setGuestError(data.error || 'Gagal membuat link WhatsApp');
       }
     } catch {
-      alert('Terjadi kesalahan');
+      setGuestError('Terjadi kesalahan');
     }
   };
 
@@ -236,7 +237,7 @@ export default function GuestsPage() {
       </div>
 
       {/* Stats */}
-      <div className="grid grid-cols-3 gap-4 mb-6">
+      <div className="grid grid-cols-1 sm:grid-cols-3 gap-4 mb-6">
         <div className="bg-white rounded-xl p-4 border border-gray-100">
           <p className="text-gray-500 text-xs uppercase tracking-wider mb-1">Total Tamu</p>
           <p className="text-2xl font-bold text-gray-900">{totalGuests}</p>
@@ -250,6 +251,12 @@ export default function GuestsPage() {
           <p className="text-2xl font-bold text-gray-900">{totalPersonCount}</p>
         </div>
       </div>
+
+      {guestError && (
+        <div className="mb-4 p-3 bg-red-50 border border-red-200 text-red-700 text-sm rounded-xl">
+          ❌ {guestError}
+        </div>
+      )}
 
       {/* Actions */}
       <div className="flex gap-3 mb-6">

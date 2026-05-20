@@ -34,6 +34,7 @@ export default function WhatsAppPage() {
   const [guests, setGuests] = useState<Guest[]>([]);
   const [filter, setFilter] = useState<'all' | 'pending'>('all');
   const [sentIds, setSentIds] = useState<Set<string>>(new Set());
+  const [waError, setWaError] = useState('');
 
   useEffect(() => {
     loadWaData();
@@ -47,8 +48,9 @@ export default function WhatsAppPage() {
       setInvitation(data.invitation);
       setStats(data.stats);
       setGuests(data.guests || []);
+      setWaError('');
     } catch {
-      console.error('Failed to load WhatsApp data');
+      setWaError('Gagal memuat data WhatsApp');
     } finally {
       setLoading(false);
     }
@@ -62,7 +64,7 @@ export default function WhatsAppPage() {
   const handleSendAll = async () => {
     const guestsToSend = filteredGuests.filter(g => !sentIds.has(g.id));
     if (guestsToSend.length === 0) {
-      alert('Semua tamu sudah dikirimi undangan');
+      setWaError('Semua tamu sudah dikirimi undangan');
       return;
     }
 
@@ -70,10 +72,11 @@ export default function WhatsAppPage() {
       return;
     }
 
+    setWaError('');
     for (const guest of guestsToSend) {
       window.open(guest.waLink, '_blank');
       setSentIds(prev => new Set([...prev, guest.id]));
-      await new Promise(r => setTimeout(r, 500)); // Small delay between opens
+      await new Promise(r => setTimeout(r, 500));
     }
   };
 
@@ -109,7 +112,7 @@ export default function WhatsAppPage() {
 
       {/* Stats */}
       {stats && (
-        <div className="grid grid-cols-3 gap-4 mb-6">
+        <div className="grid grid-cols-1 sm:grid-cols-3 gap-4 mb-6">
           <div className="bg-white rounded-xl p-4 border border-gray-100">
             <p className="text-gray-500 text-xs uppercase tracking-wider mb-1">Total Tamu</p>
             <p className="text-2xl font-bold text-gray-900">{stats.total}</p>
@@ -122,6 +125,12 @@ export default function WhatsAppPage() {
             <p className="text-gray-500 text-xs uppercase tracking-wider mb-1">Terikirim</p>
             <p className="text-2xl font-bold text-amber-600">{sentIds.size}</p>
           </div>
+        </div>
+      )}
+
+      {waError && (
+        <div className="mb-4 p-3 bg-red-50 border border-red-200 text-red-700 text-sm rounded-xl">
+          ❌ {waError}
         </div>
       )}
 

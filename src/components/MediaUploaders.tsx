@@ -17,6 +17,7 @@ export function MediaUploader({ invitationId, type }: MediaUploaderProps) {
   const [photos, setPhotos] = useState<string[]>([]);
   const [uploading, setUploading] = useState(false);
   const [loading, setLoading] = useState(true);
+  const [error, setError] = useState('');
   const fileInputRef = useRef<HTMLInputElement>(null);
 
   useEffect(() => {
@@ -28,6 +29,9 @@ export function MediaUploader({ invitationId, type }: MediaUploaderProps) {
       const res = await fetch(`/api/gallery/${invitationId}`);
       const data = await res.json();
       setPhotos(data.photos || []);
+      setError('');
+    } catch {
+      setError('Gagal memuat galeri');
     } finally {
       setLoading(false);
     }
@@ -38,11 +42,12 @@ export function MediaUploader({ invitationId, type }: MediaUploaderProps) {
     if (!files || files.length === 0) return;
 
     if (photos.length + files.length > 10) {
-      alert('Maksimal 10 foto');
+      setError('Maksimal 10 foto');
       return;
     }
 
     setUploading(true);
+    setError('');
     try {
       for (const file of Array.from(files)) {
         const formData = new FormData();
@@ -61,11 +66,13 @@ export function MediaUploader({ invitationId, type }: MediaUploaderProps) {
             headers: { 'Content-Type': 'application/json' },
             body: JSON.stringify({ url: data.url }),
           });
+        } else {
+          setError(data.error || 'Gagal mengupload');
         }
       }
       await loadGallery();
     } catch {
-      alert('Gagal mengupload');
+      setError('Gagal mengupload');
     } finally {
       setUploading(false);
       if (fileInputRef.current) fileInputRef.current.value = '';
@@ -74,20 +81,40 @@ export function MediaUploader({ invitationId, type }: MediaUploaderProps) {
 
   const handleDelete = async (url: string) => {
     if (!confirm('Hapus foto ini?')) return;
-    
-    await fetch(`/api/gallery/${invitationId}?url=${encodeURIComponent(url)}`, {
-      method: 'DELETE',
-    });
-    await loadGallery();
+    try {
+      const res = await fetch(`/api/gallery/${invitationId}?url=${encodeURIComponent(url)}`, {
+        method: 'DELETE',
+      });
+      if (!res.ok) {
+        setError('Gagal menghapus foto');
+        return;
+      }
+      setError('');
+      await loadGallery();
+    } catch {
+      setError('Gagal menghapus foto');
+    }
   };
 
   if (loading) {
-    return <div className="text-gray-400 text-sm">Memuat galeri...</div>;
+    return (
+      <div className="grid grid-cols-5 gap-3">
+        {Array.from({ length: 5 }).map((_, i) => (
+          <div key={i} className="aspect-square rounded-lg bg-gray-100 animate-pulse" />
+        ))}
+      </div>
+    );
   }
 
   return (
     <div>
-      <div className="grid grid-cols-5 gap-3 mb-4">
+      {error && (
+        <div className="mb-3 p-2 bg-red-50 border border-red-200 text-red-700 text-xs rounded-lg">
+          ❌ {error}
+        </div>
+      )}
+
+      <div className="grid grid-cols-3 sm:grid-cols-5 gap-3 mb-4">
         {photos.map((url, i) => (
           <div key={i} className="relative aspect-square rounded-lg overflow-hidden bg-gray-100 group">
             <img src={url} alt="" className="w-full h-full object-cover" />
@@ -128,6 +155,7 @@ export function MediaUploader({ invitationId, type }: MediaUploaderProps) {
 export function MusicUploader({ invitationId, currentUrl, onUploaded }: MusicUploaderProps) {
   const [uploading, setUploading] = useState(false);
   const [audioUrl, setAudioUrl] = useState(currentUrl);
+  const [error, setError] = useState('');
   const fileInputRef = useRef<HTMLInputElement>(null);
 
   const handleUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -135,6 +163,7 @@ export function MusicUploader({ invitationId, currentUrl, onUploaded }: MusicUpl
     if (!file) return;
 
     setUploading(true);
+    setError('');
     try {
       const formData = new FormData();
       formData.append('file', file);
@@ -150,10 +179,10 @@ export function MusicUploader({ invitationId, currentUrl, onUploaded }: MusicUpl
         setAudioUrl(data.url);
         onUploaded(data.url);
       } else {
-        alert(data.error || 'Gagal mengupload');
+        setError(data.error || 'Gagal mengupload');
       }
     } catch {
-      alert('Gagal mengupload');
+      setError('Gagal mengupload');
     } finally {
       setUploading(false);
       if (fileInputRef.current) fileInputRef.current.value = '';
@@ -168,7 +197,13 @@ export function MusicUploader({ invitationId, currentUrl, onUploaded }: MusicUpl
 
   return (
     <div>
-      <div className="flex items-center gap-4">
+      {error && (
+        <div className="mb-3 p-2 bg-red-50 border border-red-200 text-red-700 text-xs rounded-lg">
+          ❌ {error}
+        </div>
+      )}
+
+      <div className="flex items-center gap-4 flex-wrap">
         <label className="px-4 py-2 bg-amber-500 hover:bg-amber-600 text-white rounded-xl font-medium text-sm cursor-pointer transition-all">
           <input
             ref={fileInputRef}

@@ -3,6 +3,16 @@
 import { useEffect, useState } from 'react';
 import Link from 'next/link';
 
+interface InvitationSummary {
+  id: string;
+  slug: string;
+  partner_name: string;
+  partner_name2: string;
+  status: string;
+  total_guests: number;
+  created_at: string;
+}
+
 interface DashboardStats {
   total_invitations: number;
   active_invitations: number;
@@ -10,43 +20,88 @@ interface DashboardStats {
 }
 
 export default function DashboardPage() {
-  const [stats, setStats] = useState<DashboardStats>({
-    total_invitations: 0,
-    active_invitations: 0,
-    total_rsvp: 0,
-  });
+  const [stats, setStats] = useState<DashboardStats | null>(null);
   const [userName, setUserName] = useState('');
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState('');
 
   useEffect(() => {
-    fetch('/api/auth/me')
-      .then(res => res.json())
-      .then(data => setUserName(data.user?.name || ''));
+    let cancelled = false;
 
-    fetch('/api/invitations')
-      .then(res => res.json())
-      .then(data => {
-        const invs = data.invitations || [];
-        setStats({
-          total_invitations: invs.length,
-          active_invitations: invs.filter((i: any) => i.status === 'active').length,
-          total_rsvp: invs.reduce((acc: number, i: any) => acc + (i.total_guests || 0), 0),
-        });
-      });
+    const fetchData = async () => {
+      try {
+        const [meRes, invRes] = await Promise.all([
+          fetch('/api/auth/me'),
+          fetch('/api/invitations'),
+        ]);
+
+        if (!meRes.ok || !invRes.ok) {
+          throw new Error('Gagal memuat data dashboard');
+        }
+
+        const meData = await meRes.json();
+        const invData = await invRes.json();
+
+        if (!cancelled) {
+          setUserName(meData.user?.name || '');
+          const invs: InvitationSummary[] = invData.invitations || [];
+          setStats({
+            total_invitations: invs.length,
+            active_invitations: invs.filter(i => i.status === 'active').length,
+            total_rsvp: invs.reduce((acc, i) => acc + (i.total_guests || 0), 0),
+          });
+        }
+      } catch (e) {
+        if (!cancelled) {
+          setError('Gagal memuat dashboard. Periksa koneksi Anda.');
+        }
+      } finally {
+        if (!cancelled) setLoading(false);
+      }
+    };
+
+    fetchData();
+    return () => { cancelled = true; };
   }, []);
+
+  if (loading) {
+    return (
+      <div className="flex items-center justify-center py-20">
+        <div className="animate-spin w-8 h-8 border-4 border-amber-500 border-t-transparent rounded-full" />
+      </div>
+    );
+  }
+
+  if (error) {
+    return (
+      <div className="text-center py-20">
+        <div className="text-4xl mb-4">⚠️</div>
+        <p className="text-gray-700 mb-4">{error}</p>
+        <button
+          onClick={() => window.location.reload()}
+          className="px-5 py-2.5 bg-amber-500 hover:bg-amber-600 text-white rounded-xl font-semibold text-sm transition-all"
+        >
+          Coba Lagi
+        </button>
+      </div>
+    );
+  }
 
   return (
     <div>
       <h1 className="text-2xl font-semibold text-gray-900 mb-1">Halo, {userName || 'Pengguna'} 👋</h1>
       <p className="text-gray-500 mb-8">Selamat datang di dashboard Youth Invitation</p>
 
-      <div className="grid sm:grid-cols-3 gap-6 mb-8">
-        <StatCard icon="💌" label="Total Undangan" value={stats.total_invitations} color="bg-amber-50 text-amber-700" />
-        <StatCard icon="✅" label="Undangan Aktif" value={stats.active_invitations} color="bg-green-50 text-green-700" />
-        <StatCard icon="📋" label="Total RSVP" value={stats.total_rsvp} color="bg-blue-50 text-blue-700" />
-      </div>
+      {stats && (
+        <div className="grid sm:grid-cols-3 gap-6 mb-8">
+          <StatCard icon="💌" label="Total Undangan" value={stats.total_invitations} color="bg-amber-50 text-amber-700" />
+          <StatCard icon="✅" label="Undangan Aktif" value={stats.active_invitations} color="bg-green-50 text-green-700" />
+          <StatCard icon="📋" label="Total RSVP" value={stats.total_rsvp} color="bg-blue-50 text-blue-700" />
+        </div>
+      )}
 
       <div className="bg-white rounded-2xl p-8 border border-gray-100 text-center">
-        {stats.total_invitations === 0 ? (
+        {!stats || stats.total_invitations === 0 ? (
           <>
             <div className="text-6xl mb-4">💌</div>
             <h2 className="text-xl font-semibold text-gray-900 mb-2">Belum Ada Undangan</h2>
@@ -66,7 +121,6 @@ export default function DashboardPage() {
                 Lihat Semua →
               </Link>
             </div>
-            {/* Would list recent invitations here */}
             <Link
               href="/dashboard/invitations/new"
               className="inline-block px-5 py-2.5 bg-amber-500 hover:bg-amber-600 text-white rounded-xl font-semibold text-sm transition-all"
