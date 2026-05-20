@@ -9,20 +9,25 @@ export async function GET(req: NextRequest) {
     return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
   }
 
-  const db = getDb();
-  const invitations = db.prepare(
-    'SELECT * FROM invitations WHERE user_id = ? ORDER BY created_at DESC'
-  ).all(user.id);
+  try {
+    const db = getDb();
+    const invitations = db.prepare(
+      'SELECT * FROM invitations WHERE user_id = ? ORDER BY created_at DESC'
+    ).all(user.id);
 
-  // Count guests for each invitation
-  const result = invitations.map((inv: any) => {
-    const guestCount = db.prepare(
-      'SELECT COUNT(*) as total FROM guests WHERE invitation_id = ?'
-    ).get(inv.id) as any;
-    return { ...inv, total_guests: guestCount?.total || 0 };
-  });
+    // Count guests for each invitation
+    const result = invitations.map((inv: any) => {
+      const guestCount = db.prepare(
+        'SELECT COUNT(*) as total FROM guests WHERE invitation_id = ?'
+      ).get(inv.id) as any;
+      return { ...inv, total_guests: guestCount?.total || 0 };
+    });
 
-  return NextResponse.json({ invitations: result });
+    return NextResponse.json({ invitations: result });
+  } catch (error) {
+    console.error('List invitations error:', error);
+    return NextResponse.json({ error: 'Terjadi kesalahan server' }, { status: 500 });
+  }
 }
 
 export async function POST(req: NextRequest) {

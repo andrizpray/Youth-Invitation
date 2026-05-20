@@ -18,23 +18,28 @@ export async function GET(
     return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
   }
 
-  const { invitationId } = await params;
-  const db = getDb();
+  try {
+    const { invitationId } = await params;
+    const db = getDb();
 
-  // Verify ownership
-  const invitation = db.prepare(
-    'SELECT id, slug FROM invitations WHERE id = ? AND user_id = ?'
-  ).get(invitationId, user.id);
+    // Verify ownership
+    const invitation = db.prepare(
+      'SELECT id, slug FROM invitations WHERE id = ? AND user_id = ?'
+    ).get(invitationId, user.id);
 
-  if (!invitation) {
-    return NextResponse.json({ error: 'Undangan tidak ditemukan' }, { status: 404 });
+    if (!invitation) {
+      return NextResponse.json({ error: 'Undangan tidak ditemukan' }, { status: 404 });
+    }
+
+    const guests = db.prepare(
+      'SELECT * FROM guests WHERE invitation_id = ? ORDER BY created_at DESC'
+    ).all(invitationId);
+
+    return NextResponse.json({ guests, invitation });
+  } catch (error) {
+    console.error('List guests error:', error);
+    return NextResponse.json({ error: 'Terjadi kesalahan server' }, { status: 500 });
   }
-
-  const guests = db.prepare(
-    'SELECT * FROM guests WHERE invitation_id = ? ORDER BY created_at DESC'
-  ).all(invitationId);
-
-  return NextResponse.json({ guests, invitation });
 }
 
 // POST - Add single guest or bulk from CSV
@@ -63,6 +68,9 @@ export async function POST(
 
   // Bulk insert from CSV
   if (Array.isArray(body.guests)) {
+    if (body.guests.length > 500) {
+      return NextResponse.json({ error: 'Maksimal 500 tamu per permintaan' }, { status: 400 });
+    }
     const insert = db.prepare(`
       INSERT INTO guests (id, invitation_id, name, email, phone, code)
       VALUES (?, ?, ?, ?, ?, ?)

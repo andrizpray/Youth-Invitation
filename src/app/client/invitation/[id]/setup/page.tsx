@@ -116,7 +116,7 @@ export default function ClientSetupWizard() {
         setSaved(true);
         setTimeout(() => setSaved(false), 2000);
       }
-    } catch { /* silent */ }
+    } catch { setError('Gagal menyimpan data. Silakan coba lagi.'); }
     finally { setSaving(false); }
   };
 

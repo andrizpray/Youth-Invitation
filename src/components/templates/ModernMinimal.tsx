@@ -82,8 +82,18 @@ function TimelineItem({
 }
 
 export default function ModernMinimal({ invitation, guests, onRsvpSubmit, rsvpStatus, rsvpError }: TemplateProps) {
-  const colors = JSON.parse(invitation.colors) as { primary: string; secondary: string; accent: string };
-  const photos: string[] = JSON.parse(invitation.gallery_photos || '[]');
+  let colors: { primary: string; secondary: string; accent: string };
+  try {
+    colors = JSON.parse(invitation.colors) as { primary: string; secondary: string; accent: string };
+  } catch {
+    colors = { primary: '#2d2d2d', secondary: '#f8f8f8', accent: '#888888' };
+  }
+  let photos: string[];
+  try {
+    photos = JSON.parse(invitation.gallery_photos || '[]') as string[];
+  } catch {
+    photos = [];
+  }
   const targetDate = invitation.date_akad || invitation.date_resepsi;
 
   const nearBlack = colors.primary || '#2d2d2d';

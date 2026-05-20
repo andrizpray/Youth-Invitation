@@ -29,7 +29,7 @@ export async function GET(
     SELECT 
       COUNT(*) as total_guests,
       SUM(CASE WHEN is_attending = 1 THEN 1 ELSE 0 END) as attending,
-      SUM(CASE WHEN is_attending = 0 AND message IS NOT NULL THEN 1 ELSE 0 END) as not_attending,
+      SUM(CASE WHEN is_attending = 0 THEN 1 ELSE 0 END) as not_attending,
       SUM(CASE WHEN is_attending = 0 AND message IS NULL THEN 1 ELSE 0 END) as pending,
       SUM(guest_count) as total_persons,
       SUM(CASE WHEN is_attending = 1 THEN guest_count ELSE 0 END) as attending_persons

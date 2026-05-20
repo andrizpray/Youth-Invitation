@@ -51,8 +51,18 @@ function SectionBorder({ color }: { color: string }) {
 }
 
 export default function IslamiElegant({ invitation, guests, onRsvpSubmit, rsvpStatus, rsvpError }: TemplateProps) {
-  const colors = JSON.parse(invitation.colors) as { primary: string; secondary: string; accent: string };
-  const photos: string[] = JSON.parse(invitation.gallery_photos || '[]');
+  let colors: { primary: string; secondary: string; accent: string };
+  try {
+    colors = JSON.parse(invitation.colors) as { primary: string; secondary: string; accent: string };
+  } catch {
+    colors = { primary: '#c9a84c', secondary: '#0a1628', accent: '#e8d5a3' };
+  }
+  let photos: string[];
+  try {
+    photos = JSON.parse(invitation.gallery_photos || '[]') as string[];
+  } catch {
+    photos = [];
+  }
   const targetDate = invitation.date_akad || invitation.date_resepsi;
 
   // Use template defaults if colors aren't overridden

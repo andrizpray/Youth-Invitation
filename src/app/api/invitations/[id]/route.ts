@@ -32,10 +32,6 @@ export async function GET(
     'SELECT COUNT(*) as total, SUM(CASE WHEN is_attending = 1 THEN 1 ELSE 0 END) as attending FROM guests WHERE invitation_id = ?'
   ).get(id) as any;
 
-  const attendingRSVP = db.prepare(
-    'SELECT COUNT(*) as total FROM guests WHERE invitation_id = ? AND is_attending = 1'
-  ).get(id) as any;
-
   return NextResponse.json({
     ...invitation,
     total_guests: guestCount?.total || 0,
