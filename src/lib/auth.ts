@@ -36,7 +36,7 @@ export async function setAuthCookie(token: string) {
   const cookieStore = await cookies();
   cookieStore.set(COOKIE_NAME, token, {
     httpOnly: true,
-    secure: process.env.NODE_ENV === 'production',
+    secure: process.env.COOKIE_SECURE === 'true',
     sameSite: 'lax',
     path: '/',
     maxAge: 7 * 24 * 60 * 60,
@@ -47,7 +47,7 @@ export async function clearAuthCookie() {
   const cookieStore = await cookies();
   cookieStore.set(COOKIE_NAME, '', {
     httpOnly: true,
-    secure: process.env.NODE_ENV === 'production',
+    secure: process.env.COOKIE_SECURE === 'true',
     sameSite: 'lax',
     path: '/',
     maxAge: 0,
