@@ -64,6 +64,7 @@ export async function PATCH(
       'location', 'address', 'maps_url', 'quote', 'story',
       'gallery_photos', 'music_url', 'colors', 'font_family',
       'layout_style', 'published', 'status', 'language', 'event_date',
+      'template_id',
     ];
 
     const updates: string[] = [];

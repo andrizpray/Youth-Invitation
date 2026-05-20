@@ -4,6 +4,14 @@ import { useEffect, useState } from 'react';
 import { useParams, useRouter } from 'next/navigation';
 import { MediaUploader, MusicUploader } from '@/components/MediaUploaders';
 
+interface Template {
+  id: string;
+  name: string;
+  slug: string;
+  description: string;
+  category: string;
+}
+
 interface Invitation {
   id: string;
   slug: string;
@@ -39,6 +47,10 @@ export default function EditInvitationPage() {
   const [saving, setSaving] = useState(false);
   const [saved, setSaved] = useState(false);
   const [tab, setTab] = useState('content');
+  const [templates, setTemplates] = useState<Template[]>([]);
+  const [templateSaving, setTemplateSaving] = useState(false);
+  const [templateSaved, setTemplateSaved] = useState(false);
+  const [templateError, setTemplateError] = useState('');
 
   const [form, setForm] = useState({
     partner_name: '',
@@ -74,7 +86,38 @@ export default function EditInvitationPage() {
         });
       })
       .finally(() => setLoading(false));
+
+    fetch('/api/templates')
+      .then(res => res.json())
+      .then(data => setTemplates(data.templates || []));
   }, [params.id]);
+
+  const handleTemplateChange = async (templateId: string) => {
+    if (!invitation) return;
+    setTemplateSaving(true);
+    setTemplateSaved(false);
+    setTemplateError('');
+    try {
+      const res = await fetch(`/api/invitations/${params.id}`, {
+        method: 'PATCH',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ template_id: templateId }),
+      });
+      if (res.ok) {
+        const updated = await res.json();
+        setInvitation(prev => prev ? { ...prev, ...updated.invitation } : prev);
+        setTemplateSaved(true);
+        setTimeout(() => setTemplateSaved(false), 3000);
+      } else {
+        const err = await res.json();
+        setTemplateError(err.error || 'Gagal mengganti template');
+      }
+    } catch {
+      setTemplateError('Terjadi kesalahan koneksi');
+    } finally {
+      setTemplateSaving(false);
+    }
+  };
 
   const [saveError, setSaveError] = useState('');
   const [showPublishError, setShowPublishError] = useState('');
@@ -119,6 +162,7 @@ export default function EditInvitationPage() {
 
   const tabs = [
     { id: 'content', label: 'Konten' },
+    { id: 'template', label: 'Template' },
     { id: 'design', label: 'Tampilan' },
     { id: 'media', label: 'Media' },
     { id: 'guests', label: 'Tamu' },
@@ -300,6 +344,70 @@ export default function EditInvitationPage() {
               />
             </div>
           </div>
+        </div>
+      )}
+
+      {/* Template Tab */}
+      {tab === 'template' && (
+        <div className="bg-white rounded-2xl p-6 border border-gray-100 space-y-4">
+          <div>
+            <h3 className="font-semibold text-gray-900 mb-1">Ganti Template</h3>
+            <p className="text-sm text-gray-500 mb-4">Pilih template baru untuk undangan ini. Perubahan langsung tersimpan.</p>
+          </div>
+
+          {templateError && (
+            <div className="p-3 bg-red-50 border border-red-200 text-red-700 text-sm rounded-xl">
+              ❌ {templateError}
+            </div>
+          )}
+
+          {templateSaved && (
+            <div className="p-3 bg-green-50 border border-green-200 text-green-700 text-sm rounded-xl">
+              ✅ Template berhasil diubah
+            </div>
+          )}
+
+          {templateSaving && (
+            <div className="p-3 bg-amber-50 border border-amber-200 text-amber-700 text-sm rounded-xl">
+              ⏳ Menyimpan template...
+            </div>
+          )}
+
+          <div className="grid grid-cols-2 gap-3">
+            {templates.map((t) => {
+              const isActive = invitation.template_id === t.id;
+              const categoryEmoji: Record<string, string> = {
+                klasik: '🏛️', romantic: '💕', modern: '✨', natural: '🌿', islami: '🕌',
+              };
+              const categoryLabel: Record<string, string> = {
+                klasik: 'Klasik', romantic: 'Romantis', modern: 'Modern', natural: 'Natural', islami: 'Islami',
+              };
+              return (
+                <button
+                  key={t.id}
+                  type="button"
+                  disabled={templateSaving}
+                  onClick={() => handleTemplateChange(t.id)}
+                  className={`p-4 rounded-xl border-2 text-left transition-all ${
+                    isActive
+                      ? 'border-amber-400 bg-amber-50'
+                      : 'border-gray-200 hover:border-gray-300 disabled:opacity-50'
+                  }`}
+                >
+                  <div className="text-lg mb-1">{categoryEmoji[t.category] || '💌'}</div>
+                  <p className="font-medium text-gray-900 text-sm">{t.name}</p>
+                  <p className="text-xs text-gray-400">{categoryLabel[t.category] || t.category}</p>
+                  {isActive && (
+                    <p className="text-xs text-amber-600 font-medium mt-1">✓ Aktif</p>
+                  )}
+                </button>
+              );
+            })}
+          </div>
+
+          {templates.length === 0 && (
+            <p className="text-gray-400 text-sm text-center py-6">Memuat template...</p>
+          )}
         </div>
       )}
 

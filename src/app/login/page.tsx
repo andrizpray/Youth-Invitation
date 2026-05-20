@@ -30,7 +30,12 @@ export default function LoginPage() {
         return;
       }
 
-      router.push('/client');
+      // redirect by role
+      if (data.user?.role === 'admin') {
+        router.push('/dashboard');
+      } else {
+        router.push('/client');
+      }
       router.refresh();
     } catch {
       setError('Terjadi kesalahan, coba lagi');
