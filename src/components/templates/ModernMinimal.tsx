@@ -6,6 +6,10 @@ import RsvpSection from './RsvpSection';
 import ScrollReveal from './ScrollReveal';
 import { TemplateProps } from './types';
 
+function MinimalDivider({ color }: { color: string }) {
+  return <hr style={{ border: 'none', borderTop: `1px solid ${color}`, margin: '0 auto', maxWidth: '120px', opacity: 0.3 }} />;
+}
+
 export default function ModernMinimal({ invitation, guests, onRsvpSubmit, rsvpStatus, rsvpError }: TemplateProps) {
   let colors: { primary: string; secondary: string; accent: string };
   try {
@@ -28,7 +32,6 @@ export default function ModernMinimal({ invitation, guests, onRsvpSubmit, rsvpSt
     return null;
   })();
 
-  const [opened, setOpened] = useState(false);
   const [lightboxImg, setLightboxImg] = useState<string | null>(null);
   const [copied, setCopied] = useState<string | null>(null);
   const [musicPlaying, setMusicPlaying] = useState(false);
@@ -51,12 +54,6 @@ export default function ModernMinimal({ invitation, guests, onRsvpSubmit, rsvpSt
   const offWhite = colors.secondary || '#f8f8f8';
   const gray = colors.accent || '#888888';
 
-  const handleOpen = () => {
-    setOpened(true);
-    setTimeout(() => scrollTo('section-bismillah'), 400);
-    if (invitation.music_url && audioRef.current) audioRef.current.play().then(() => setMusicPlaying(true)).catch(() => {});
-  };
-
   const toggleMusic = () => {
     if (!audioRef.current) return;
     if (musicPlaying) { audioRef.current.pause(); setMusicPlaying(false); }
@@ -75,42 +72,6 @@ export default function ModernMinimal({ invitation, guests, onRsvpSubmit, rsvpSt
     <div style={{ fontFamily: '-apple-system, BlinkMacSystemFont, "Segoe UI", Helvetica, sans-serif', backgroundColor: offWhite, color: nearBlack, paddingBottom: '80px' }}>
 
       {invitation.music_url && <audio ref={audioRef} src={invitation.music_url} loop />}
-
-      {/* COVER OVERLAY */}
-      <div className={`fixed inset-0 z-50 flex flex-col items-center justify-center px-8 text-center overflow-hidden transition-all duration-700 ${opened ? 'opacity-0 pointer-events-none -translate-y-10' : 'opacity-100'}`}
-        style={{ backgroundColor: nearBlack }}>
-        <div className="absolute inset-0 pointer-events-none">
-          <svg width="100%" height="100%" xmlns="http://www.w3.org/2000/svg">
-            <rect x="10%" y="10%" width="80%" height="80%" stroke={offWhite} strokeWidth="0.5" fill="none" opacity="0.1" />
-          </svg>
-        </div>
-
-        <div className="relative z-10 flex flex-col items-center">
-          <p className="text-xs uppercase tracking-[0.5em] mb-12 opacity-0 animate-[fadeInDown_0.8s_ease-out_0.1s_forwards]" style={{ color: offWhite + '88' }}>Wedding Invitation</p>
-
-          <h1 className="font-extralight mb-3 leading-none opacity-0 animate-[fadeInUp_0.8s_ease-out_0.2s_forwards]"
-            style={{ color: offWhite, fontSize: 'clamp(2.5rem, 10vw, 4rem)', letterSpacing: '-0.02em' }}>{invitation.partner_name}</h1>
-          <div className="flex items-center gap-4 my-6 w-full max-w-xs opacity-0 animate-[fadeInUp_0.8s_ease-out_0.3s_forwards]">
-            <div style={{ height: '1px', flex: 1, backgroundColor: offWhite + '44' }} />
-            <span style={{ color: offWhite }}>◆</span>
-            <div style={{ height: '1px', flex: 1, backgroundColor: offWhite + '44' }} />
-          </div>
-          <h2 className="font-extralight mb-12 leading-none opacity-0 animate-[fadeInUp_0.8s_ease-out_0.4s_forwards]"
-            style={{ color: offWhite, fontSize: 'clamp(2.5rem, 10vw, 4rem)', letterSpacing: '-0.02em' }}>{invitation.partner_name2}</h2>
-
-          {targetDate && (
-            <p className="text-xs uppercase tracking-[0.3em] mb-12 opacity-0 animate-[fadeInUp_0.8s_ease-out_0.5s_forwards]" style={{ color: offWhite + 'bb' }}>
-              {new Date(targetDate).toLocaleDateString('id-ID', { day: 'numeric', month: 'long', year: 'numeric' })}
-            </p>
-          )}
-
-          <button type="button" onClick={handleOpen}
-            className="px-8 py-3 text-sm font-semibold tracking-[0.2em] uppercase transition-all hover:scale-105 active:scale-95 shadow-lg opacity-0 animate-[fadeInUp_0.8s_ease-out_0.6s_forwards]"
-            style={{ backgroundColor: offWhite, color: nearBlack, minHeight: '48px', borderRadius: '2px' }}>
-            Open Invitation
-          </button>
-        </div>
-      </div>
 
       <section id="section-cover" className="min-h-screen flex flex-col items-center justify-center px-8 text-center" style={{ backgroundColor: nearBlack }}>
         <h1 className="font-extralight mb-3 leading-none" style={{ color: offWhite, fontSize: 'clamp(2.5rem, 10vw, 4rem)' }}>{invitation.partner_name}</h1>
@@ -221,7 +182,7 @@ export default function ModernMinimal({ invitation, guests, onRsvpSubmit, rsvpSt
                   <div key={label}>
                     <p className="text-xs uppercase tracking-widest mb-2" style={{ color: nearBlack }}>{label}</p>
                     <p className="text-sm italic leading-loose" style={{ color: nearBlack, opacity: 0.7 }}>
-                      {idx === 0 && invitation.story}
+                      {idx === 0 && 'Perkenalan yang sederhana menjadi awal dari sebuah perjalanan cinta yang indah.'}
                       {idx === 1 && 'Our journey continued, growing together in love and understanding.'}
                       {idx === 2 && 'Now, we are ready to make a sacred promise before God and our loved ones.'}
                     </p>
@@ -274,19 +235,17 @@ export default function ModernMinimal({ invitation, guests, onRsvpSubmit, rsvpSt
         <p className="text-xs mt-10" style={{ color: offWhite + '44' }}>© Made with Love</p>
       </footer>
 
-      {opened && (
-        <nav className="fixed bottom-0 left-0 right-0 z-40 flex justify-around items-center py-3 backdrop-blur-md"
-          style={{ backgroundColor: offWhite + 'ee', borderTop: `1px solid ${nearBlack}22` }}>
-          {navItems.map((item) => (
-            <button key={item.id} type="button" onClick={() => scrollTo(item.id)}
-              className="flex flex-col items-center justify-center w-14 h-14 rounded-full transition-all hover:scale-110 active:scale-95">
-              <span className="text-2xl">{item.icon}</span>
-            </button>
-          ))}
-        </nav>
-      )}
+      <nav className="fixed bottom-0 left-0 right-0 z-40 flex justify-around items-center py-3 backdrop-blur-md"
+        style={{ backgroundColor: offWhite + 'ee', borderTop: `1px solid ${nearBlack}22` }}>
+        {navItems.map((item) => (
+          <button key={item.id} type="button" onClick={() => scrollTo(item.id)}
+            className="flex flex-col items-center justify-center w-14 h-14 rounded-full transition-all hover:scale-110 active:scale-95">
+            <span className="text-2xl">{item.icon}</span>
+          </button>
+        ))}
+      </nav>
 
-      {invitation.music_url && opened && (
+      {invitation.music_url && (
         <button type="button" onClick={toggleMusic}
           className="fixed bottom-24 right-4 z-40 w-12 h-12 rounded-full flex items-center justify-center shadow-lg transition-all hover:scale-110"
           style={{ backgroundColor: nearBlack, color: offWhite }} aria-label="Toggle music">

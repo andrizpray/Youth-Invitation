@@ -2,6 +2,7 @@
 
 import { useEffect, useRef, useState, useCallback } from 'react';
 import { TemplateProps } from './types';
+import RsvpSection from './RsvpSection';
 
 // ===== SHARED COMPONENTS =====
 
@@ -27,8 +28,8 @@ function ImgCircle({ src, alt, size = '13rem', borderColor = '#fff' }: { src?: s
   if (!src) {
     return (
       <div
-        className="mx-auto rounded-circle border border-3 shadow d-flex align-items-center justify-content-center"
-        style={{ width: size, height: size, maxWidth: '100%', maxHeight: '100%', borderColor }}
+        className="mx-auto rounded-full shadow flex items-center justify-center"
+        style={{ width: size, height: size, maxWidth: '100%', maxHeight: '100%', borderWidth: '3px', borderStyle: 'solid', borderColor }}
       >
         <svg width="48" height="48" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1" opacity="0.4">
           <path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/>
@@ -41,8 +42,8 @@ function ImgCircle({ src, alt, size = '13rem', borderColor = '#fff' }: { src?: s
     <img
       src={src}
       alt={alt}
-      className="mx-auto rounded-circle border border-3 shadow"
-      style={{ width: size, height: size, maxWidth: '100%', maxHeight: '100%', objectFit: 'cover', borderColor }}
+      className="mx-auto rounded-full shadow"
+      style={{ width: size, height: size, maxWidth: '100%', maxHeight: '100%', objectFit: 'cover', borderWidth: '3px', borderStyle: 'solid', borderColor }}
       loading="lazy"
     />
   );
@@ -62,13 +63,13 @@ function CountdownPill({ targetDate, textColor = '#fff' }: { targetDate: string;
   const [t, setT] = useState(calc);
   useEffect(() => { const i = setInterval(() => setT(calc()), 1000); return () => clearInterval(i); }, [calc]);
   return (
-    <div className="d-inline-flex border rounded-pill shadow py-2 px-4 gap-0" style={{ color: textColor }}>
+    <div className="inline-flex border rounded-full shadow py-2 px-4 gap-0" style={{ color: textColor }}>
       {[
         { v: t.d, l: 'Hari' }, { v: t.h, l: 'Jam' }, { v: t.m, l: 'Menit' }, { v: t.s, l: 'Detik' },
       ].map((x, i) => (
         <div key={i} className="px-2 text-center" style={{ minWidth: '4rem' }}>
           <span style={{ fontSize: '1.25rem', fontWeight: 600 }}>{x.v}</span>
-          <small className="d-block" style={{ fontSize: '0.65rem', opacity: 0.7 }}>{x.l}</small>
+          <small className="block" style={{ fontSize: '0.65rem', opacity: 0.7 }}>{x.l}</small>
         </div>
       ))}
     </div>
@@ -133,7 +134,6 @@ export default function InvitesGroupsStyle({ invitation, guests, onRsvpSubmit, r
   useEffect(() => () => clearTimeout(copyTimerRef.current), []);
 
   useEffect(() => {
-    // Auto-play music on first interaction
     const play = () => {
       if (invitation.music_url && audioRef.current) {
         audioRef.current.play().then(() => setMusicPlaying(true)).catch(() => {});
@@ -170,12 +170,16 @@ export default function InvitesGroupsStyle({ invitation, guests, onRsvpSubmit, r
 
       {/* ===== LOADING PAGE ===== */}
       <div
-        className="fixed inset-0 d-flex justify-content-center align-items-center"
+        className="fixed inset-0 flex justify-center items-center"
         style={{ zIndex: 1056, backgroundColor: colors.secondary, transition: 'opacity 0.5s', opacity: loading ? 1 : 0, pointerEvents: loading ? 'auto' : 'none' }}
       >
         <div className="text-center">
-          <div className="spinner-border mb-3" style={{ width: '3rem', height: '3rem', color: colors.primary }} role="status">
-            <span className="visually-hidden">Loading...</span>
+          <div
+            className="animate-spin rounded-full border-4 mb-3 mx-auto"
+            style={{ width: '3rem', height: '3rem', borderColor: colors.primary, borderTopColor: 'transparent' }}
+            role="status"
+          >
+            <span className="sr-only">Loading...</span>
           </div>
           <p className="mb-0" style={{ fontFamily: STYLE_FONT_ESTHETIC, fontSize: '1.5rem', color: colors.accent }}>Memuat Undangan...</p>
         </div>
@@ -185,20 +189,20 @@ export default function InvitesGroupsStyle({ invitation, guests, onRsvpSubmit, r
       <div className={`transition-all duration-1000 ${loading ? 'opacity-0' : 'opacity-100'}`}>
 
         {/* ===== HOME / COVER ===== */}
-        <section id="section-home" className="position-relative overflow-hidden text-center p-0 m-0" style={{ color: '#fff' }}>
+        <section id="section-home" className="relative overflow-hidden text-center p-0 m-0" style={{ color: '#fff' }}>
           <img
             src={photos[0] || 'https://picsum.photos/400/800'}
             alt="bg"
-            className="position-absolute top-50 start-50 translate-middle"
+            className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2"
             style={{ width: '100%', height: '100%', objectFit: 'cover', maskImage: 'linear-gradient(0.5turn, transparent, black 40%, black 60%, transparent)', opacity: 0.35 }}
           />
-          <div className="position-relative py-5 px-3" style={{ background: `linear-gradient(180deg, rgba(0,0,0,0.3), rgba(0,0,0,0.8))` }}>
+          <div className="relative py-5 px-3" style={{ background: `linear-gradient(180deg, rgba(0,0,0,0.3), rgba(0,0,0,0.8))` }}>
             <p className="mb-3 pt-4" style={{ fontFamily: STYLE_FONT_ESTHETIC, fontSize: '2.25rem', fontWeight: 500 }}>Undangan Pernikahan</p>
-            <div className="mx-auto rounded-circle border border-3 border-light shadow my-4 overflow-hidden" style={{ width: '13rem', height: '13rem', maxWidth: '100%', maxHeight: '100%' }}>
+            <div className="mx-auto rounded-full shadow my-4 overflow-hidden" style={{ width: '13rem', height: '13rem', maxWidth: '100%', maxHeight: '100%', borderWidth: '3px', borderStyle: 'solid', borderColor: '#fff' }}>
               {photos[1] || photos[0] ? (
-                <img src={photos[1] || photos[0]} alt="couple" className="w-100 h-100" style={{ objectFit: 'cover' }} />
+                <img src={photos[1] || photos[0]} alt="couple" className="w-full h-full" style={{ objectFit: 'cover' }} />
               ) : (
-                <div className="w-100 h-100 d-flex align-items-center justify-content-center" style={{ opacity: 0.4 }}>
+                <div className="w-full h-full flex items-center justify-center" style={{ opacity: 0.4 }}>
                   <svg width="64" height="64" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/></svg>
                 </div>
               )}
@@ -209,19 +213,19 @@ export default function InvitesGroupsStyle({ invitation, guests, onRsvpSubmit, r
             {targetDate && <p className="mb-3" style={{ fontSize: '1.25rem', opacity: 0.8 }}>{fmtDate(targetDate)}</p>}
             {invitation.maps_url && (
               <a href={invitation.maps_url} target="_blank" rel="noopener noreferrer"
-                className="btn btn-sm rounded-pill px-3 py-1 d-inline-block"
+                className="inline-block rounded-full px-3 py-1"
                 style={{ border: '1px solid rgba(255,255,255,0.5)', color: '#fff', fontSize: '0.825rem', textDecoration: 'none' }}
               >
-                <svg width="14" height="14" viewBox="0 0 16 16" fill="currentColor" className="me-2 d-inline" style={{ verticalAlign: 'middle' }}>
+                <svg width="14" height="14" viewBox="0 0 16 16" fill="currentColor" className="mr-2 inline" style={{ verticalAlign: 'middle' }}>
                   <path d="M3.5 0a.5.5 0 0 1 .5.5V1h8V.5a.5.5 0 0 1 1 0V1h1a2 2 0 0 1 2 2v11a2 2 0 0 1-2 2H2a2 2 0 0 1-2-2V3a2 2 0 0 1 2-2h1V.5a.5.5 0 0 1 .5-.5zM2 2a1 1 0 0 0-1 1v1h14V3a1 1 0 0 0-1-1H2zm13 3H1v9a1 1 0 0 0 1 1h12a1 1 0 0 0 1-1V5z"/>
                 </svg>
                 Save Google Calendar
               </a>
             )}
             {/* Scroll mouse indicator */}
-            <div className="d-flex justify-content-center mt-4 mb-2">
-              <div className="border border-secondary border-2 rounded-5 px-2 py-1" style={{ opacity: 0.5 }}>
-                <div className="rounded-4" style={{ width: '0.5rem', height: '1rem', backgroundColor: '#fff', animation: 'scrollAnim 1.5s ease-in-out infinite' }}></div>
+            <div className="flex justify-center mt-4 mb-2">
+              <div className="border-2 rounded-3xl px-2 py-1" style={{ opacity: 0.5, borderColor: '#6c757d' }}>
+                <div className="rounded-lg" style={{ width: '0.5rem', height: '1rem', backgroundColor: '#fff', animation: 'scrollAnim 1.5s ease-in-out infinite' }}></div>
               </div>
             </div>
             <p className="pb-4 m-0" style={{ fontSize: '0.825rem', opacity: 0.6, color: '#6c757d' }}>Scroll Down</p>
@@ -243,8 +247,8 @@ export default function InvitesGroupsStyle({ invitation, guests, onRsvpSubmit, r
 
             {/* Bride - Pria */}
             <ScrollRevealSimple>
-              <div className="position-relative">
-                <div className="position-absolute" style={{ top: '0%', right: '5%', opacity: 0.4 }}>
+              <div className="relative">
+                <div className="absolute" style={{ top: '0%', right: '5%', opacity: 0.4 }}>
                   <HeartIcon />
                 </div>
                 <ImgCircle src={photos[1] || photos[0]} alt={invitation.partner_name} borderColor={colors.primary} />
@@ -257,8 +261,8 @@ export default function InvitesGroupsStyle({ invitation, guests, onRsvpSubmit, r
 
             {/* Bride - Wanita */}
             <ScrollRevealSimple delay={200}>
-              <div className="position-relative">
-                <div className="position-absolute" style={{ top: '0%', left: '5%', opacity: 0.4 }}>
+              <div className="relative">
+                <div className="absolute" style={{ top: '0%', left: '5%', opacity: 0.4 }}>
                   <HeartIcon />
                 </div>
                 <ImgCircle src={photos[2] || photos[0]} alt={invitation.partner_name2} borderColor={colors.primary} />
@@ -273,16 +277,16 @@ export default function InvitesGroupsStyle({ invitation, guests, onRsvpSubmit, r
           {/* QURAN VERSES */}
           <section className="py-3 px-3 text-center" style={{ backgroundColor: colors.secondary, color: colors.accent }}>
             <SectionTitle text="Allah SWT Berfirman" color={colors.primary} />
-            <div className="container" style={{ maxWidth: '500px' }}>
-              <div className="p-3 mb-3 rounded-4 shadow-sm" style={{ backgroundColor: '#fff' }}>
+            <div className="mx-auto" style={{ maxWidth: '500px' }}>
+              <div className="p-3 mb-3 rounded-2xl shadow-sm" style={{ backgroundColor: '#fff' }}>
                 <p className="mb-2" style={{ fontSize: '0.95rem' }}>
-                  "Dan segala sesuatu Kami ciptakan berpasang-pasangan agar kamu mengingat (kebesaran Allah)."
+                  &ldquo;Dan segala sesuatu Kami ciptakan berpasang-pasangan agar kamu mengingat (kebesaran Allah).&rdquo;
                 </p>
                 <p className="mb-0" style={{ fontSize: '0.95rem', color: colors.primary }}>QS. Adh-Dhariyat: 49</p>
               </div>
-              <div className="p-3 rounded-4 shadow-sm" style={{ backgroundColor: '#fff' }}>
+              <div className="p-3 rounded-2xl shadow-sm" style={{ backgroundColor: '#fff' }}>
                 <p className="mb-2" style={{ fontSize: '0.95rem' }}>
-                  "Dan di antara tanda-tanda (kebesaran)-Nya ialah Dia menciptakan pasangan-pasangan untukmu dari jenismu sendiri..."
+                  &ldquo;Dan di antara tanda-tanda (kebesaran)-Nya ialah Dia menciptakan pasangan-pasangan untukmu dari jenismu sendiri...&rdquo;
                 </p>
                 <p className="mb-0" style={{ fontSize: '0.95rem', color: colors.primary }}>QS. Ar-Rum: 21</p>
               </div>
@@ -294,31 +298,31 @@ export default function InvitesGroupsStyle({ invitation, guests, onRsvpSubmit, r
             <>
               <WaveDivider color={colors.secondary} />
               <section className="py-3 px-3" style={{ backgroundColor: colors.secondary, color: colors.accent }}>
-                <div className="container" style={{ maxWidth: '500px' }}>
-                  <div className="p-3 rounded-5 shadow-sm" style={{ backgroundColor: '#fff' }}>
+                <div className="mx-auto" style={{ maxWidth: '500px' }}>
+                  <div className="p-3 rounded-3xl shadow-sm" style={{ backgroundColor: '#fff' }}>
                     <SectionTitle text="Kisah Cinta" color={colors.primary} />
                     <div className="overflow-y-auto p-2" style={{ height: '15rem' }}>
                       {storyTimeline ? storyTimeline.map((item, idx) => (
-                        <div key={idx} className="row mb-3">
-                          <div className="col-auto position-relative">
-                            <p className="d-flex justify-content-center align-items-center rounded-circle m-0 p-0 z-1 border border-2 position-relative"
+                        <div key={idx} className="flex mb-3">
+                          <div className="w-auto relative">
+                            <p className="flex justify-center items-center rounded-full m-0 p-0 relative border-2"
                               style={{ width: '2rem', height: '2rem', backgroundColor: '#fff', borderColor: colors.primary, color: colors.primary }}>
                               {idx + 1}
                             </p>
                             {idx < (storyTimeline?.length || 0) - 1 && (
-                              <hr className="position-absolute top-0 start-50 translate-middle-x border h-100 z-0 m-0" style={{ borderColor: colors.primary, opacity: 0.3 }} />
+                              <hr className="absolute top-0 left-1/2 -translate-x-1/2 border h-full m-0" style={{ borderColor: colors.primary, opacity: 0.3, zIndex: 0 }} />
                             )}
                           </div>
-                          <div className="col mt-1 mb-2 ps-0">
-                            <p className="fw-bold mb-1" style={{ fontSize: '0.95rem' }}>
+                          <div className="flex-1 mt-1 mb-2" style={{ paddingLeft: 0 }}>
+                            <p className="font-bold mb-1" style={{ fontSize: '0.95rem' }}>
                               {item.emoji || '💍'} {item.title || ''}
                             </p>
                             {item.date && <p className="mb-1" style={{ fontSize: '0.75rem', opacity: 0.6 }}>{item.date}</p>}
-                            <p className="small mb-0" style={{ opacity: 0.8 }}>{item.description || ''}</p>
+                            <p className="text-sm mb-0" style={{ opacity: 0.8 }}>{item.description || ''}</p>
                           </div>
                         </div>
                       )) : (
-                        <p className="text-center small" style={{ opacity: 0.7 }}>{invitation.story}</p>
+                        <p className="text-center text-sm" style={{ opacity: 0.7 }}>{'Kisah cinta kami yang penuh berkah...'}</p>
                       )}
                     </div>
                   </div>
@@ -350,10 +354,10 @@ export default function InvitesGroupsStyle({ invitation, guests, onRsvpSubmit, r
                       {invitation.location && <p className="my-1" style={{ fontSize: '0.9rem', opacity: 0.8 }}>{invitation.location}</p>}
                       {invitation.maps_url && (
                         <a href={invitation.maps_url} target="_blank" rel="noopener noreferrer"
-                          className="btn btn-sm rounded-pill px-4 mt-2"
-                          style={{ border: `1px solid ${colors.accent}`, color: colors.accent, fontSize: '0.85rem' }}
+                          className="inline-block rounded-full px-4 mt-2"
+                          style={{ border: `1px solid ${colors.accent}`, color: colors.accent, fontSize: '0.85rem', textDecoration: 'none', padding: '0.25rem 1rem' }}
                         >
-                          <i className="fa-regular fa-map me-2"></i>Buka Maps
+                          <i className="fa-regular fa-map mr-2"></i>Buka Maps
                         </a>
                       )}
                     </div>
@@ -370,10 +374,10 @@ export default function InvitesGroupsStyle({ invitation, guests, onRsvpSubmit, r
                       {invitation.location && <p className="my-1" style={{ fontSize: '0.9rem', opacity: 0.8 }}>{invitation.location}</p>}
                       {invitation.maps_url && (
                         <a href={invitation.maps_url} target="_blank" rel="noopener noreferrer"
-                          className="btn btn-sm rounded-pill px-4 mt-2"
-                          style={{ border: `1px solid ${colors.accent}`, color: colors.accent, fontSize: '0.85rem' }}
+                          className="inline-block rounded-full px-4 mt-2"
+                          style={{ border: `1px solid ${colors.accent}`, color: colors.accent, fontSize: '0.85rem', textDecoration: 'none', padding: '0.25rem 1rem' }}
                         >
-                          <i className="fa-regular fa-map me-2"></i>Buka Maps
+                          <i className="fa-regular fa-map mr-2"></i>Buka Maps
                         </a>
                       )}
                     </div>
@@ -389,10 +393,10 @@ export default function InvitesGroupsStyle({ invitation, guests, onRsvpSubmit, r
               <WaveDivider color={colors.secondary} />
               <section id="section-gallery" className="py-3 px-3 text-center" style={{ backgroundColor: colors.secondary, color: colors.accent }}>
                 <SectionTitle text="Gallery" color={colors.primary} />
-                <div className="d-flex flex-wrap justify-content-center gap-2" style={{ maxWidth: '500px', margin: '0 auto' }}>
+                <div className="flex flex-wrap justify-center gap-2" style={{ maxWidth: '500px', margin: '0 auto' }}>
                   {photos.map((photo, idx) => (
                     <div key={idx} className="overflow-hidden cursor-pointer" style={{ width: 'calc(33.333% - 0.5rem)', aspectRatio: '3/4' }} onClick={() => setLightboxImg(photo)}>
-                      <img src={photo} alt={`Gallery ${idx + 1}`} className="w-100 h-100" style={{ objectFit: 'cover', transition: 'transform 0.3s' }} loading="lazy" />
+                      <img src={photo} alt={`Gallery ${idx + 1}`} className="w-full h-full" style={{ objectFit: 'cover', transition: 'transform 0.3s' }} loading="lazy" />
                     </div>
                   ))}
                 </div>
@@ -408,16 +412,16 @@ export default function InvitesGroupsStyle({ invitation, guests, onRsvpSubmit, r
               <p className="mb-4" style={{ fontSize: '0.9rem', opacity: 0.7 }}>
                 Doa restu Anda adalah hadiah terindah. Jika ingin memberi tanda kasih:
               </p>
-              <div className="d-flex flex-wrap justify-content-center gap-3" style={{ maxWidth: '500px', margin: '0 auto' }}>
+              <div className="flex flex-wrap justify-center gap-3" style={{ maxWidth: '500px', margin: '0 auto' }}>
                 {[{ name: 'BCA', acc: '123 456 7890' }, { name: 'Mandiri', acc: '987 654 3210' }].map((b) => (
-                  <div key={b.name} className="flex-fill p-3 rounded-4 text-start shadow-sm" style={{ backgroundColor: '#fff', minWidth: '200px' }}>
-                    <p className="fw-bold mb-1" style={{ fontSize: '0.95rem', color: colors.accent }}>{b.name}</p>
+                  <div key={b.name} className="flex-1 p-3 rounded-2xl text-left shadow-sm" style={{ backgroundColor: '#fff', minWidth: '200px' }}>
+                    <p className="font-bold mb-1" style={{ fontSize: '0.95rem', color: colors.accent }}>{b.name}</p>
                     <p className="mb-1" style={{ fontSize: '0.75rem', opacity: 0.6 }}>a.n. {invitation.partner_name} &amp; {invitation.partner_name2}</p>
                     <p className="mb-2" style={{ fontSize: '1.1rem', letterSpacing: '0.1em', color: colors.primary }}>{b.acc}</p>
                     <button
                       onClick={() => handleCopy(b.acc.replace(/\s/g, ''), b.name.toLowerCase())}
-                      className="btn btn-sm rounded-pill px-3"
-                      style={{ backgroundColor: colors.accent, color: '#fff', border: 'none', fontSize: '0.8rem' }}
+                      className="inline-block rounded-full"
+                      style={{ backgroundColor: colors.accent, color: '#fff', border: 'none', fontSize: '0.8rem', padding: '0.25rem 0.75rem', cursor: 'pointer' }}
                     >
                       {copied === b.name.toLowerCase() ? '✓ Tersalin' : 'Copy'}
                     </button>
@@ -432,13 +436,13 @@ export default function InvitesGroupsStyle({ invitation, guests, onRsvpSubmit, r
           <section id="section-wishes" className="py-3 px-3 text-center" style={{ backgroundColor: colors.secondary, color: colors.accent }}>
             <SectionTitle text="R.S.V.P" color={colors.primary} />
             <div style={{ maxWidth: '500px', margin: '0 auto' }}>
-              <RsvpSectionSimple
+              <RsvpSection
                 guests={guests}
                 onSubmit={onRsvpSubmit}
                 rsvpStatus={rsvpStatus}
                 rsvpError={rsvpError}
-                accentColor={colors.accent}
                 primaryColor={colors.primary}
+                accentColor={colors.accent}
                 bgColor="#fff"
               />
             </div>
@@ -447,28 +451,28 @@ export default function InvitesGroupsStyle({ invitation, guests, onRsvpSubmit, r
           {/* FOOTER */}
           <footer className="text-center py-4 px-3" style={{ backgroundColor: colors.accent, color: '#fff' }}>
             <p className="mb-1" style={{ fontFamily: STYLE_FONT_ESTHETIC, fontSize: '1.5rem' }}>Terima Kasih</p>
-            <p className="mb-2 small px-3" style={{ opacity: 0.8 }}>
+            <p className="mb-2 text-sm px-3" style={{ opacity: 0.8 }}>
               Merupakan suatu kebahagiaan dan kehormatan apabila Bapak/Ibu/Saudara/i berkenan hadir memberikan doa restu.
             </p>
             <p className="mb-0" style={{ fontFamily: STYLE_FONT_ESTHETIC, fontSize: '2rem', color: colors.primary }}>
               {invitation.partner_name} &amp; {invitation.partner_name2}
             </p>
-            <p className="mt-3 mb-0 small" style={{ opacity: 0.5 }}>&copy; 2025 Undangan Digital</p>
+            <p className="mt-3 mb-0 text-sm" style={{ opacity: 0.5 }}>&copy; 2025 Undangan Digital</p>
           </footer>
 
           {/* Music Button */}
           {invitation.music_url && (
             <button onClick={toggleMusic}
-              className="btn btn-sm rounded-circle position-fixed shadow d-flex align-items-center justify-content-center"
-              style={{ bottom: '5rem', right: '1rem', zIndex: 40, width: '3rem', height: '3rem', backgroundColor: colors.primary, color: '#fff', border: 'none' }}
+              className="fixed rounded-full shadow flex items-center justify-center"
+              style={{ bottom: '5rem', right: '1rem', zIndex: 40, width: '3rem', height: '3rem', backgroundColor: colors.primary, color: '#fff', border: 'none', cursor: 'pointer' }}
             >
               {musicPlaying ? '🔊' : '🔇'}
             </button>
           )}
 
           {/* Bottom Navigation */}
-          <nav className="navbar fixed-bottom navbar-expand d-flex justify-content-center py-1" style={{ backgroundColor: colors.accent }}>
-            <ul className="navbar-nav gap-2">
+          <nav className="fixed bottom-0 w-full flex justify-center py-1" style={{ backgroundColor: colors.accent }}>
+            <ul className="flex gap-2 list-none m-0 p-0">
               {[
                 { id: 'section-home', icon: 'fa-house', label: 'Home' },
                 { id: 'section-bride', icon: 'fa-heart', label: 'Couple' },
@@ -476,8 +480,8 @@ export default function InvitesGroupsStyle({ invitation, guests, onRsvpSubmit, r
                 { id: 'section-gallery', icon: 'fa-image', label: 'Gallery' },
                 { id: 'section-wishes', icon: 'fa-comment', label: 'Wishes' },
               ].map((item) => (
-                <li key={item.id} className="nav-item">
-                  <a className="nav-link d-flex flex-column align-items-center px-2" href={`#${item.id}`} style={{ color: 'rgba(255,255,255,0.7)', fontSize: '0.7rem' }}
+                <li key={item.id}>
+                  <a className="flex flex-col items-center px-2" href={`#${item.id}`} style={{ color: 'rgba(255,255,255,0.7)', fontSize: '0.7rem', textDecoration: 'none' }}
                     onClick={(e) => { e.preventDefault(); document.getElementById(item.id)?.scrollIntoView({ behavior: 'smooth' }); }}>
                     <i className={`fa-solid ${item.icon}`} style={{ fontSize: '1.1rem' }}></i>
                     <span className="mt-0">{item.label}</span>
@@ -489,8 +493,8 @@ export default function InvitesGroupsStyle({ invitation, guests, onRsvpSubmit, r
 
           {/* Lightbox */}
           {lightboxImg && (
-            <div className="position-fixed inset-0 d-flex align-items-center justify-content-center cursor-pointer" style={{ zIndex: 1055, backgroundColor: 'rgba(0,0,0,0.9)' }} onClick={() => setLightboxImg(null)}>
-              <img src={lightboxImg} alt="Gallery" className="mw-100 mh-100 p-3" style={{ objectFit: 'contain' }} />
+            <div className="fixed inset-0 flex items-center justify-center cursor-pointer" style={{ zIndex: 1055, backgroundColor: 'rgba(0,0,0,0.9)' }} onClick={() => setLightboxImg(null)}>
+              <img src={lightboxImg} alt="Gallery" className="max-w-full max-h-full p-3" style={{ objectFit: 'contain' }} />
             </div>
           )}
 
@@ -505,83 +509,6 @@ export default function InvitesGroupsStyle({ invitation, guests, onRsvpSubmit, r
         .font-esthetic { font-family: 'Pinyon Script', cursive !important; }
         .fa-solid, .fa-regular { font-family: 'Font Awesome 6 Free' !important; }
       `}</style>
-    </div>
-  );
-}
-
-// Simplified RsvpSection inline component
-function RsvpSectionSimple({
-  guests, onSubmit, rsvpStatus, rsvpError, accentColor, primaryColor, bgColor,
-}: {
-  guests: any[]; onSubmit: (form: any) => Promise<void>; rsvpStatus: string; rsvpError: string;
-  accentColor: string; primaryColor: string; bgColor: string;
-}) {
-  const [form, setForm] = useState({ name: '', is_attending: true, guest_count: 1, message: '' });
-
-  const handleSubmit = (e: React.FormEvent) => {
-    e.preventDefault();
-    if (!form.name.trim()) return;
-    onSubmit(form);
-    setForm({ name: '', is_attending: true, guest_count: 1, message: '' });
-  };
-
-  return (
-    <div className="p-3 rounded-4 text-start" style={{ backgroundColor: bgColor, boxShadow: '0 2px 12px rgba(0,0,0,0.08)' }}>
-      <form onSubmit={handleSubmit}>
-        <div className="mb-2">
-          <input type="text" className="form-control form-control-sm rounded-pill" placeholder="Nama Anda"
-            value={form.name} onChange={(e) => setForm({ ...form, name: e.target.value })} required />
-        </div>
-        <div className="mb-2">
-          <select className="form-select form-select-sm rounded-pill" style={{ fontSize: '0.875rem' }}
-            value={form.is_attending ? 'hadir' : 'tidak'}
-            onChange={(e) => setForm({ ...form, is_attending: e.target.value === 'hadir' })}
-          >
-            <option value="hadir">Hadir</option>
-            <option value="tidak">Tidak Hadir</option>
-          </select>
-        </div>
-        {form.is_attending && (
-          <div className="mb-2">
-            <select className="form-select form-select-sm rounded-pill" style={{ fontSize: '0.875rem' }}
-              value={form.guest_count}
-              onChange={(e) => setForm({ ...form, guest_count: parseInt(e.target.value) })}
-            >
-              {[1, 2, 3, 4, 5].map((n) => <option key={n} value={n}>{n} tamu</option>)}
-            </select>
-          </div>
-        )}
-        <div className="mb-2">
-          <textarea className="form-control form-control-sm rounded-4" rows={2} placeholder="Ucapan & Doa"
-            value={form.message} onChange={(e) => setForm({ ...form, message: e.target.value })} maxLength={200} />
-          <small style={{ fontSize: '0.7rem', opacity: 0.5 }}>{form.message.length}/200</small>
-        </div>
-        <button type="submit" className="btn btn-sm w-100 rounded-pill py-2"
-          style={{ backgroundColor: accentColor, color: '#fff', border: 'none', fontSize: '0.85rem' }}
-          disabled={rsvpStatus === 'submitting'}
-        >
-          {rsvpStatus === 'submitting' ? 'Mengirim...' : 'Kirim Konfirmasi'}
-        </button>
-      </form>
-
-      {rsvpStatus === 'success' && <div className="alert alert-success mt-2 py-2 small mb-0 rounded-pill">Terima kasih! Konfirmasi Anda telah tersimpan.</div>}
-      {rsvpStatus === 'error' && <div className="alert alert-danger mt-2 py-2 small mb-0 rounded-pill">{rsvpError || 'Gagal mengirim, coba lagi.'}</div>}
-
-      {guests.length > 0 && (
-        <div className="mt-3">
-          <hr />
-          <p className="fw-bold mb-2" style={{ fontSize: '0.9rem', color: accentColor }}>Ucapan ({guests.length})</p>
-          <div style={{ maxHeight: '200px', overflowY: 'auto' }}>
-            {guests.slice(0, 20).map((g) => (
-              <div key={g.id} className="mb-2 p-2 rounded-3" style={{ backgroundColor: '#f8f9fa' }}>
-                <p className="fw-bold mb-0" style={{ fontSize: '0.85rem' }}>{g.name}</p>
-                {g.message && <p className="mb-0 small" style={{ opacity: 0.8 }}>{g.message}</p>}
-                <small style={{ opacity: 0.5, fontSize: '0.7rem' }}>{g.is_attending ? '✅ Hadir' : '❌ Tidak Hadir'} {g.guest_count > 1 ? `(${g.guest_count} org)` : ''}</small>
-              </div>
-            ))}
-          </div>
-        </div>
-      )}
     </div>
   );
 }
