@@ -3,6 +3,8 @@
 import { useState } from 'react';
 import { RsvpForm, GuestData } from './types';
 
+const MAX_MSG = 200;
+
 interface RsvpSectionProps {
   guests: GuestData[];
   onSubmit: (form: RsvpForm) => Promise<void>;
@@ -37,10 +39,16 @@ export default function RsvpSection({
     }
   };
 
+  const inputBase: React.CSSProperties = {
+    borderColor: primaryColor + '44',
+    backgroundColor: bgColor,
+    minHeight: '48px',
+  };
+
   return (
     <div className="w-full max-w-sm mx-auto">
       {rsvpStatus === 'success' ? (
-        <div className="text-center py-8">
+        <div className="text-center py-10">
           <div className="text-5xl mb-4">🎉</div>
           <p className="text-xl font-semibold" style={{ color: primaryColor }}>Terima kasih!</p>
           <p className="text-sm mt-2 opacity-70">Konfirmasi kehadiran Anda sudah kami terima.</p>
@@ -53,28 +61,34 @@ export default function RsvpSection({
             value={form.name}
             onChange={(e) => setForm({ ...form, name: e.target.value })}
             required
-            className="w-full px-4 py-3 rounded-xl border text-sm focus:outline-none focus:ring-2"
-            style={{ borderColor: primaryColor + '44', backgroundColor: bgColor, focusRingColor: primaryColor } as React.CSSProperties}
+            className="w-full px-4 rounded-xl border text-sm focus:outline-none focus:ring-2 transition-all"
+            style={inputBase}
           />
 
           <div className="flex gap-2">
             <button
               type="button"
               onClick={() => setForm({ ...form, is_attending: true })}
-              className="flex-1 py-3 rounded-xl text-sm font-medium transition-all"
-              style={form.is_attending
-                ? { backgroundColor: primaryColor, color: '#fff' }
-                : { border: `1px solid ${primaryColor}44`, color: accentColor }}
+              className="flex-1 rounded-xl text-sm font-medium transition-all active:scale-95"
+              style={{
+                minHeight: '48px',
+                ...(form.is_attending
+                  ? { backgroundColor: primaryColor, color: '#fff' }
+                  : { border: `1px solid ${primaryColor}44`, color: accentColor }),
+              }}
             >
               ✅ Hadir
             </button>
             <button
               type="button"
               onClick={() => setForm({ ...form, is_attending: false })}
-              className="flex-1 py-3 rounded-xl text-sm font-medium transition-all"
-              style={!form.is_attending
-                ? { backgroundColor: '#dc2626', color: '#fff' }
-                : { border: `1px solid ${primaryColor}44`, color: accentColor }}
+              className="flex-1 rounded-xl text-sm font-medium transition-all active:scale-95"
+              style={{
+                minHeight: '48px',
+                ...(!form.is_attending
+                  ? { backgroundColor: '#dc2626', color: '#fff' }
+                  : { border: `1px solid ${primaryColor}44`, color: accentColor }),
+              }}
             >
               ❌ Tidak Hadir
             </button>
@@ -88,25 +102,31 @@ export default function RsvpSection({
               onChange={(e) => setForm({ ...form, guest_count: parseInt(e.target.value) || 1 })}
               min={1}
               max={10}
-              className="w-full px-4 py-3 rounded-xl border text-sm focus:outline-none"
-              style={{ borderColor: primaryColor + '44', backgroundColor: bgColor }}
+              className="w-full px-4 rounded-xl border text-sm focus:outline-none focus:ring-2 transition-all"
+              style={inputBase}
             />
           )}
 
-          <textarea
-            placeholder="Ucapan & Doa (opsional)"
-            value={form.message}
-            onChange={(e) => setForm({ ...form, message: e.target.value })}
-            rows={3}
-            className="w-full px-4 py-3 rounded-xl border text-sm focus:outline-none resize-none"
-            style={{ borderColor: primaryColor + '44', backgroundColor: bgColor }}
-          />
+          <div>
+            <textarea
+              placeholder="Ucapan & Doa (opsional)"
+              value={form.message}
+              onChange={(e) => setForm({ ...form, message: e.target.value.slice(0, MAX_MSG) })}
+              rows={4}
+              maxLength={MAX_MSG}
+              className="w-full px-4 py-3 rounded-xl border text-sm focus:outline-none focus:ring-2 resize-none transition-all"
+              style={{ borderColor: primaryColor + '44', backgroundColor: bgColor }}
+            />
+            <p className="text-right text-xs mt-1 opacity-40">
+              {form.message.length}/{MAX_MSG}
+            </p>
+          </div>
 
           <button
             type="submit"
             disabled={rsvpStatus === 'submitting'}
-            className="w-full py-3 rounded-xl font-semibold text-white text-sm transition-opacity disabled:opacity-60"
-            style={{ backgroundColor: primaryColor }}
+            className="w-full rounded-xl font-semibold text-white text-sm transition-all disabled:opacity-60 active:scale-95"
+            style={{ backgroundColor: primaryColor, minHeight: '48px' }}
           >
             {rsvpStatus === 'submitting' ? 'Mengirim...' : 'Kirim Konfirmasi'}
           </button>
@@ -117,15 +137,14 @@ export default function RsvpSection({
         </form>
       )}
 
-      {/* Wishes list */}
       {guests.filter(g => g.message).length > 0 && (
         <div className="mt-10">
           <p className="text-center text-xs uppercase tracking-widest opacity-50 mb-4">Ucapan & Doa</p>
-          <div className="space-y-3 max-h-64 overflow-y-auto pr-1">
+          <div className="space-y-3 max-h-72 overflow-y-auto pr-1">
             {guests.filter(g => g.message).map((g) => (
               <div
                 key={g.id}
-                className="p-3 rounded-xl text-sm"
+                className="p-4 rounded-xl text-sm"
                 style={{ backgroundColor: primaryColor + '11', border: `1px solid ${primaryColor}22` }}
               >
                 <div className="flex items-center justify-between mb-1">
@@ -134,12 +153,12 @@ export default function RsvpSection({
                     className="text-xs px-2 py-0.5 rounded-full"
                     style={g.is_attending
                       ? { backgroundColor: primaryColor + '22', color: primaryColor }
-                      : { backgroundColor: '#dc2626' + '22', color: '#dc2626' }}
+                      : { backgroundColor: '#dc262622', color: '#dc2626' }}
                   >
                     {g.is_attending ? 'Hadir' : 'Tidak Hadir'}
                   </span>
                 </div>
-                <p className="italic opacity-70">"{g.message}"</p>
+                <p className="italic opacity-70 leading-relaxed">"{g.message}"</p>
               </div>
             ))}
           </div>

@@ -56,7 +56,11 @@ export default function Countdown({ targetDate, primaryColor, accentColor }: Cou
           className="flex flex-col items-center justify-center w-16 h-16 rounded-xl"
           style={{ backgroundColor: primaryColor + '22', border: `1px solid ${primaryColor}44` }}
         >
-          <span className="text-2xl font-bold leading-none" style={{ color: primaryColor }}>
+          <span
+            key={value}
+            className="countdown-digit text-2xl font-bold leading-none"
+            style={{ color: primaryColor }}
+          >
             {String(value).padStart(2, '0')}
           </span>
           <span className="text-xs mt-1" style={{ color: accentColor }}>

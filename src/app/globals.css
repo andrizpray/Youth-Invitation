@@ -19,3 +19,44 @@ body {
   max-width: 480px;
   margin: 0 auto;
 }
+
+/* ── Scroll reveal ── */
+.scroll-reveal {
+  opacity: 0;
+  transform: translateY(24px);
+  transition: opacity 0.65s ease, transform 0.65s ease;
+  will-change: opacity, transform;
+}
+
+.scroll-reveal.reveal-visible {
+  opacity: 1;
+  transform: translateY(0);
+}
+
+/* ── Countdown digit flip ── */
+@keyframes countFlip {
+  from { opacity: 0.2; transform: translateY(-5px); }
+  to   { opacity: 1;   transform: translateY(0);    }
+}
+
+.countdown-digit {
+  display: block;
+  animation: countFlip 0.25s ease-out;
+}
+
+/* ── Gallery image hover ── */
+.gallery-img {
+  transition: transform 0.35s ease;
+  will-change: transform;
+}
+
+.gallery-item:hover .gallery-img,
+.gallery-item:focus-visible .gallery-img {
+  transform: scale(1.06);
+}
+
+/* ── Toast slide-up ── */
+@keyframes toastSlideUp {
+  from { opacity: 0; transform: translateX(-50%) translateY(10px); }
+  to   { opacity: 1; transform: translateX(-50%) translateY(0);    }
+}
