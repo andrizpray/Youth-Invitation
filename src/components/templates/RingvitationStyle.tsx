@@ -1,26 +1,119 @@
 'use client';
 
-import { useEffect, useRef, useState } from 'react';
-import Countdown from './Countdown';
-import RsvpSection from './RsvpSection';
-import ScrollReveal from './ScrollReveal';
-import ScrollToTop from './ScrollToTop';
+import { useEffect, useRef, useState, useCallback } from 'react';
 import { TemplateProps } from './types';
+
+// ===== SHARED COMPONENTS =====
+
+function WaveDivider({ color }: { color: string }) {
+  return (
+    <div className="overflow-hidden -mb-3" style={{ lineHeight: 0 }}>
+      <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1440 320" style={{ display: 'block', color, fill: 'currentColor' }}>
+        <path d="M0,160L48,144C96,128,192,96,288,106.7C384,117,480,171,576,165.3C672,160,768,96,864,96C960,96,1056,160,1152,154.7C1248,149,1344,75,1392,37.3L1440,0L1440,320L1392,320C1344,320,1248,320,1152,320C1056,320,960,320,864,320C768,320,672,320,576,320C480,320,384,320,288,320C192,320,96,320,48,320L0,320Z" />
+      </svg>
+    </div>
+  );
+}
+
+function HeartIcon({ className }: { className?: string }) {
+  return (
+    <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" fill="currentColor" viewBox="0 0 16 16" className={className}>
+      <path d="m8 2.748-.717-.737C5.6.281 2.514.878 1.4 3.053c-.523 1.023-.641 2.5.314 4.385.92 1.815 2.834 3.989 6.286 6.357 3.452-2.368 5.365-4.542 6.286-6.357.955-1.886.838-3.362.314-4.385C13.486.878 10.4.28 8.717 2.01zM8 15C-7.333 4.868 3.279-3.04 7.824 1.143q.09.083.176.171a3 3 0 0 1 .176-.17C12.72-3.042 23.333 4.867 8 15" />
+    </svg>
+  );
+}
+
+function ImgCircle({ src, alt, size = '13rem', borderColor = '#fff' }: { src?: string | null; alt: string; size?: string; borderColor?: string }) {
+  if (!src) {
+    return (
+      <div
+        className="mx-auto rounded-circle border border-3 shadow d-flex align-items-center justify-content-center"
+        style={{ width: size, height: size, maxWidth: '100%', maxHeight: '100%', borderColor }}
+      >
+        <svg width="48" height="48" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1" opacity="0.4">
+          <path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/>
+          <circle cx="12" cy="7" r="4"/>
+        </svg>
+      </div>
+    );
+  }
+  return (
+    <img
+      src={src}
+      alt={alt}
+      className="mx-auto rounded-circle border border-3 shadow"
+      style={{ width: size, height: size, maxWidth: '100%', maxHeight: '100%', objectFit: 'cover', borderColor }}
+      loading="lazy"
+    />
+  );
+}
+
+function CountdownPill({ targetDate, textColor = '#fff' }: { targetDate: string; textColor?: string }) {
+  const calc = useCallback(() => {
+    const diff = new Date(targetDate).getTime() - Date.now();
+    if (diff < 0) return { d: 0, h: 0, m: 0, s: 0 };
+    return {
+      d: Math.floor(diff / (1000 * 60 * 60 * 24)),
+      h: Math.floor((diff % (1000 * 60 * 60 * 24)) / (1000 * 60 * 60)),
+      m: Math.floor((diff % (1000 * 60 * 60)) / (1000 * 60)),
+      s: Math.floor((diff % (1000 * 60)) / 1000),
+    };
+  }, [targetDate]);
+  const [t, setT] = useState(calc);
+  useEffect(() => { const i = setInterval(() => setT(calc()), 1000); return () => clearInterval(i); }, [calc]);
+  return (
+    <div className="d-inline-flex border rounded-pill shadow py-2 px-4 gap-0" style={{ color: textColor }}>
+      {[
+        { v: t.d, l: 'Hari' }, { v: t.h, l: 'Jam' }, { v: t.m, l: 'Menit' }, { v: t.s, l: 'Detik' },
+      ].map((x, i) => (
+        <div key={i} className="px-2 text-center" style={{ minWidth: '4rem' }}>
+          <span style={{ fontSize: '1.25rem', fontWeight: 600 }}>{x.v}</span>
+          <small className="d-block" style={{ fontSize: '0.65rem', opacity: 0.7 }}>{x.l}</small>
+        </div>
+      ))}
+    </div>
+  );
+}
+
+function ScrollRevealSimple({ children, delay = 0 }: { children: React.ReactNode; delay?: number }) {
+  const ref = useRef<HTMLDivElement>(null);
+  const [visible, setVisible] = useState(false);
+  useEffect(() => {
+    const el = ref.current;
+    if (!el) return;
+    const obs = new IntersectionObserver(
+      ([entry]) => { if (entry.isIntersecting) { setVisible(true); obs.disconnect(); } },
+      { threshold: 0.1 }
+    );
+    obs.observe(el);
+    return () => obs.disconnect();
+  }, []);
+  return (
+    <div
+      ref={ref}
+      className={`transition-all duration-700 ${visible ? 'opacity-100 translate-y-0' : 'opacity-0 translate-y-8'}`}
+      style={{ transitionDelay: `${delay}ms` }}
+    >
+      {children}
+    </div>
+  );
+}
+
+// ===== STYLED COMPONENTS =====
+
+function SectionTitle({ text, color }: { text: string; color: string }) {
+  return <h2 className="font-esthetic text-center py-3 m-0" style={{ fontSize: '2rem', color }}>{text}</h2>;
+}
+
+// ===== MAIN TEMPLATE =====
 
 export default function RingvitationStyle({ invitation, guests, onRsvpSubmit, rsvpStatus, rsvpError }: TemplateProps) {
   let colors: { primary: string; secondary: string; accent: string };
-  try {
-    colors = JSON.parse(invitation.colors) as { primary: string; secondary: string; accent: string };
-  } catch {
-    colors = { primary: '#9b59b6', secondary: '#f8f4fc', accent: '#4a235a' };
-  }
+  try { colors = JSON.parse(invitation.colors); } catch { colors = { primary: '#9b59b6', secondary: '#f8f4fc', accent: '#4a235a' }; }
   let photos: string[];
-  try {
-    photos = JSON.parse(invitation.gallery_photos || '[]') as string[];
-  } catch {
-    photos = [];
-  }
+  try { photos = JSON.parse(invitation.gallery_photos || '[]'); } catch { photos = []; }
 
+  const [loading, setLoading] = useState(true);
   const [opened, setOpened] = useState(false);
   const [lightboxImg, setLightboxImg] = useState<string | null>(null);
   const [copied, setCopied] = useState<string | null>(null);
@@ -34,7 +127,11 @@ export default function RingvitationStyle({ invitation, guests, onRsvpSubmit, rs
       const parsed = JSON.parse(invitation.story || '[]');
       if (Array.isArray(parsed) && parsed.length > 0) setStoryTimeline(parsed);
     } catch {}
+    // Loading page fade
+    const t = setTimeout(() => setLoading(false), 1500);
+    return () => clearTimeout(t);
   }, [invitation.story]);
+
   useEffect(() => () => clearTimeout(copyTimerRef.current), []);
 
   const handleCopy = (text: string, key: string) => {
@@ -45,11 +142,8 @@ export default function RingvitationStyle({ invitation, guests, onRsvpSubmit, rs
     });
   };
 
-  const scrollTo = (id: string) => document.getElementById(id)?.scrollIntoView({ behavior: 'smooth' });
-
   const handleOpen = () => {
     setOpened(true);
-    setTimeout(() => scrollTo('section-bismillah'), 500);
     if (invitation.music_url && audioRef.current) {
       audioRef.current.play().then(() => setMusicPlaying(true)).catch(() => {});
     }
@@ -62,284 +156,430 @@ export default function RingvitationStyle({ invitation, guests, onRsvpSubmit, rs
   };
 
   const targetDate = invitation.date_akad || invitation.date_resepsi;
-  const formatDate = (d: string) => new Date(d).toLocaleDateString('id-ID', {
-    weekday: 'long', day: 'numeric', month: 'long', year: 'numeric',
-  });
+  const fmtDate = (d: string) => new Date(d).toLocaleDateString('id-ID', { weekday: 'long', day: 'numeric', month: 'long', year: 'numeric' });
 
-  // === EXACT COLORS FROM ringvitation.com ===
-  const BURGUNDY = '#611a20';       // rgb(97, 26, 32) - main accent
-  const CREAM = '#fffaf2';           // rgb(255, 250, 242) - light bg
-  const WARM_CREAM = '#fff4de';      // rgb(255, 244, 222) - warm section
-  const DARK = '#4b4f58';            // rgb(75, 79, 88) - text
-  const WHITE = '#ffffff';
-  const LIGHT_GRAY = '#85899a';      // rgb(133, 138, 154) - secondary button
+  const STYLE_FONT = '"Playfair Display SC", serif';
+  const STYLE_FONT_ESTHETIC = '"Sacramento", cursive';
 
   return (
-    <div style={{ fontFamily: '"Playfair Display SC", "Poppins", serif', color: DARK, backgroundColor: CREAM, paddingBottom: '80px' }}>
+    <div style={{ fontFamily: STYLE_FONT }}>
       {invitation.music_url && <audio ref={audioRef} src={invitation.music_url} loop />}
 
-      {/* ===== COVER OVERLAY ===== */}
+      {/* ===== LOADING PAGE ===== */}
       <div
-        className={`fixed inset-0 z-50 flex flex-col items-center justify-center px-6 text-center transition-all duration-700 ${opened ? 'opacity-0 pointer-events-none -translate-y-10' : 'opacity-100'}`}
-        style={{ background: `linear-gradient(rgba(0,0,0,0.5) 0%, ${BURGUNDY} 100%)` }}
+        className="fixed inset-0 d-flex justify-content-center align-items-center"
+        style={{ zIndex: 1056, backgroundColor: colors.secondary, transition: 'opacity 0.5s', opacity: loading ? 1 : 0, pointerEvents: loading ? 'auto' : 'none' }}
       >
-        <div className="absolute inset-0 z-0 opacity-20"
-          style={{
-            backgroundImage: photos[0] ? `url(${photos[0]})` : 'none',
-            backgroundSize: 'cover',
-            backgroundPosition: 'center',
-          }}
-        />
-
-        <div className="relative z-10 flex flex-col items-center">
-          <p className="text-xs uppercase tracking-[0.5em] mb-8 opacity-0 animate-[fadeInDown_0.8s_ease-out_0.1s_forwards]" style={{ color: `${WARM_CREAM}cc`, fontFamily: '"Cinzel Decorative", cursive' }}>
-            The Wedding Of
-          </p>
-
-          <h1 className="text-5xl md:text-6xl text-white mb-1 opacity-0 animate-[fadeInUp_0.8s_ease-out_0.2s_forwards]" style={{ fontFamily: '"Playfair Display SC", serif', letterSpacing: '0.03em' }}>
-            {invitation.partner_name}
-          </h1>
-          <p className="text-2xl my-3 opacity-0 animate-[fadeInUp_0.8s_ease-out_0.3s_forwards]" style={{ color: WARM_CREAM, fontFamily: '"Cinzel Decorative", cursive' }}>✦</p>
-          <h1 className="text-5xl md:text-6xl text-white mb-6 opacity-0 animate-[fadeInUp_0.8s_ease-out_0.4s_forwards]" style={{ fontFamily: '"Playfair Display SC", serif', letterSpacing: '0.03em' }}>
-            {invitation.partner_name2}
-          </h1>
-
-          {targetDate && (
-            <p className="text-white/60 text-sm tracking-[0.3em] mb-14 uppercase opacity-0 animate-[fadeInUp_0.8s_ease-out_0.5s_forwards]" style={{ fontFamily: '"Poppins", sans-serif' }}>
-              {new Date(targetDate).toLocaleDateString('id-ID', { day: 'numeric', month: 'long', year: 'numeric' })}
-            </p>
-          )}
-
-          <button
-            type="button"
-            onClick={handleOpen}
-            className="px-10 py-3 text-xs font-semibold uppercase transition-all duration-300 hover:scale-105 active:scale-95 opacity-0 animate-[fadeInUp_0.8s_ease-out_0.6s_forwards]"
-            style={{
-              background: BURGUNDY,
-              color: WHITE,
-              border: `1px solid ${WARM_CREAM}`,
-              fontFamily: '"Poppins", sans-serif',
-            }}
-          >
-            BUKA UNDANGAN
-          </button>
+        <div className="text-center">
+          <div className="spinner-border mb-3" style={{ width: '3rem', height: '3rem', color: colors.primary }} role="status">
+            <span className="visually-hidden">Loading...</span>
+          </div>
+          <p className="mb-0" style={{ fontFamily: STYLE_FONT_ESTHETIC, fontSize: '1.5rem', color: colors.accent }}>Memuat Undangan...</p>
         </div>
       </div>
 
-      {/* MAIN */}
-      <div className={opened ? '' : 'hidden'}>
+      {/* ===== CONTENT ===== */}
+      <div className={`transition-all duration-1000 ${loading ? 'opacity-0' : 'opacity-100'}`}>
 
-        {/* Bismillah */}
-        <section id="section-bismillah" className="min-h-screen flex flex-col items-center justify-center px-6 py-24 text-center"
-          style={{ background: `radial-gradient(at 50% 100%, ${WARM_CREAM} 40%, ${CREAM} 64%)` }}
+        {/* ===== COVER OVERLAY (BUKA UNDANGAN) ===== */}
+        <div
+          className={`fixed inset-0 d-flex flex-column justify-content-center align-items-center text-center px-4 transition-all duration-700 ${opened ? 'opacity-0 pointer-events-none' : 'opacity-100'}`}
+          style={{ zIndex: 50, background: `linear-gradient(rgba(0,0,0,0.3), rgba(0,0,0,0.7))`, color: '#fff' }}
         >
-          <ScrollReveal className="flex flex-col items-center max-w-md">
-            <p className="text-white/60 text-lg mb-2" style={{ fontFamily: '"Amiri", serif' }}>بِسْمِ اللَّهِ الرَّحْمَنِ الرَّحِيم</p>
-            <p className="text-xs uppercase tracking-[0.4em] mb-10" style={{ color: `${BURGUNDY}aa` }}>Bismillahirrahmanirrahim</p>
-            <p className="text-sm leading-relaxed mb-2 italic" style={{ color: `${DARK}cc` }}>
-              "Dan di antara tanda-tanda (kebesaran)-Nya ialah Dia menciptakan pasangan-pasangan untukmu dari jenismu sendiri..."
-            </p>
-            <p className="text-xs mb-10" style={{ color: `${DARK}88` }}>(QS. Ar-Rum : 21)</p>
-            {targetDate && <Countdown targetDate={targetDate} primaryColor={BURGUNDY} accentColor={`${DARK}88`} />}
-          </ScrollReveal>
-        </section>
+          <p className="mb-3" style={{ fontFamily: STYLE_FONT_ESTHETIC, fontSize: '1.25rem', opacity: 0.8 }}>Undangan Pernikahan</p>
+          <h1 className="mb-1" style={{ fontFamily: STYLE_FONT_ESTHETIC, fontSize: '2.5rem' }}>
+            {invitation.partner_name} &amp; {invitation.partner_name2}
+          </h1>
+          {targetDate && <p className="mb-4" style={{ fontSize: '1.1rem', opacity: 0.8 }}>{fmtDate(targetDate)}</p>}
+          <button
+            onClick={handleOpen}
+            className="btn btn-sm rounded-pill px-4 py-2"
+            style={{ border: '1px solid #fff', color: '#fff', fontSize: '0.875rem' }}
+          >
+            <i className="fa-regular fa-envelope me-2"></i>Buka Undangan
+          </button>
+        </div>
 
-        {/* Bride & Groom */}
-        {(invitation.parent_name || invitation.parent_name2) && (
-          <section id="section-couple" className="min-h-screen flex flex-col items-center justify-center px-6 py-24 text-center" style={{ background: CREAM }}>
-            <ScrollReveal>
-              <p className="text-xs uppercase tracking-[0.4em] mb-2" style={{ color: BURGUNDY, fontFamily: '"Cinzel Decorative", cursive' }}>Bride &amp; Groom</p>
-              <div className="flex flex-col sm:flex-row gap-8 max-w-xl mx-auto">
-                {[
-                  { name: invitation.partner_name, parent: invitation.parent_name, photo: photos[0] },
-                  { name: invitation.partner_name2, parent: invitation.parent_name2, photo: photos[1] || photos[0] },
-                ].map((p, i) => p.parent && (
-                  <div key={i} className="flex-1 text-center" style={{
-                    background: WHITE,
-                    border: `1px solid ${WARM_CREAM}`,
-                  }}>
-                    <div className="p-6">
-                      <div className="w-20 h-20 mx-auto mb-3 overflow-hidden" style={{ border: `1px solid ${WARM_CREAM}` }}>
-                        {p.photo ? <img src={p.photo} alt={p.name} className="w-full h-full object-cover" />
-                          : <div className="w-full h-full flex items-center justify-center" style={{ backgroundColor: `${BURGUNDY}10`, color: BURGUNDY }}>
-                              <svg width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/></svg>
-                            </div>}
-                      </div>
-                      <p className="text-lg mb-1" style={{ fontFamily: '"Playfair Display SC", serif', color: BURGUNDY }}>{p.name}</p>
-                      <p className="text-xs opacity-60" style={{ fontFamily: '"Poppins", sans-serif' }}>Putra{i === 1 ? 'ri' : ''} dari {p.parent}</p>
+        {/* ===== MAIN CONTENT ===== */}
+        <div className={opened ? '' : 'd-none'}>
+
+          {/* HOME SECTION */}
+          <section id="section-home" className="position-relative overflow-hidden text-center" style={{ color: '#fff' }}>
+            <div className="position-relative py-5 px-3" style={{ background: `linear-gradient(135deg, ${colors.accent}, #000)` }}>
+              <p className="mb-2" style={{ fontFamily: STYLE_FONT_ESTHETIC, fontSize: '1.25rem', opacity: 0.8 }}>Undangan Pernikahan</p>
+              <ImgCircle src={photos[0]} alt="couple" borderColor={colors.primary} />
+              <h1 className="my-3" style={{ fontFamily: STYLE_FONT_ESTHETIC, fontSize: '2.5rem' }}>
+                {invitation.partner_name} &amp; {invitation.partner_name2}
+              </h1>
+              {targetDate && <p style={{ fontSize: '1.15rem', opacity: 0.8 }}>{fmtDate(targetDate)}</p>}
+              {invitation.maps_url && (
+                <a href={invitation.maps_url} target="_blank" rel="noopener noreferrer"
+                  className="btn btn-sm rounded-pill px-3 py-1 mt-2"
+                  style={{ border: '1px solid rgba(255,255,255,0.5)', color: '#fff', fontSize: '0.825rem' }}
+                >
+                  <i className="fa-regular fa-calendar-check me-2"></i>Save Google Calendar
+                </a>
+              )}
+              <div className="d-flex justify-content-center mt-4 mb-2">
+                <div className="border border-secondary border-2 rounded-5 px-2 py-1" style={{ opacity: 0.5 }}>
+                  <div className="rounded-4" style={{ width: '0.5rem', height: '1rem', backgroundColor: '#fff', animation: 'scrollAnim 1.5s ease-in-out infinite' }}></div>
+                </div>
+              </div>
+              <p className="mb-0" style={{ fontSize: '0.825rem', opacity: 0.6 }}>Scroll Down</p>
+            </div>
+          </section>
+
+          <WaveDivider color={colors.secondary} />
+
+          {/* BRIDE SECTION */}
+          <section id="section-bride" className="text-center py-4 px-3" style={{ backgroundColor: colors.secondary, color: colors.accent }}>
+            <h2 className="mb-3" style={{ fontFamily: '"Noto Naskh Arabic", serif', fontSize: '2rem' }}>بِسْمِ اللّٰهِ الرَّحْمٰنِ الرَّحِيْمِ</h2>
+            <h2 className="mb-3" style={{ fontFamily: STYLE_FONT_ESTHETIC, fontSize: '2rem' }}>Assalamualaikum Warahmatullahi Wabarakatuh</h2>
+            <p className="mb-4 px-2" style={{ fontSize: '0.95rem', opacity: 0.8 }}>
+              Tanpa mengurangi rasa hormat, kami mengundang Anda untuk berkenan menghadiri acara pernikahan kami:
+            </p>
+
+            {/* Bride - Pria */}
+            <ScrollRevealSimple>
+              <div className="position-relative">
+                <div className="position-absolute" style={{ top: '0%', right: '5%', opacity: 0.4 }}>
+                  <HeartIcon />
+                </div>
+                <ImgCircle src={photos[1] || photos[0]} alt={invitation.partner_name} borderColor={colors.primary} />
+                <h2 className="mt-3 mb-1" style={{ fontFamily: STYLE_FONT_ESTHETIC, fontSize: '2.125rem' }}>{invitation.partner_name}</h2>
+                <p className="mb-0" style={{ fontSize: '0.95rem', opacity: 0.8 }}>{invitation.parent_name ? `Putra dari ${invitation.parent_name}` : ''}</p>
+              </div>
+            </ScrollRevealSimple>
+
+            <h2 className="my-4" style={{ fontFamily: STYLE_FONT_ESTHETIC, fontSize: '4.5rem', color: colors.primary }}>&amp;</h2>
+
+            {/* Bride - Wanita */}
+            <ScrollRevealSimple delay={200}>
+              <div className="position-relative">
+                <div className="position-absolute" style={{ top: '0%', left: '5%', opacity: 0.4 }}>
+                  <HeartIcon />
+                </div>
+                <ImgCircle src={photos[2] || photos[0]} alt={invitation.partner_name2} borderColor={colors.primary} />
+                <h2 className="mt-3 mb-1" style={{ fontFamily: STYLE_FONT_ESTHETIC, fontSize: '2.125rem' }}>{invitation.partner_name2}</h2>
+                <p className="mb-0" style={{ fontSize: '0.95rem', opacity: 0.8 }}>{invitation.parent_name2 ? `Putri dari ${invitation.parent_name2}` : ''}</p>
+              </div>
+            </ScrollRevealSimple>
+          </section>
+
+          <WaveDivider color={colors.secondary} />
+
+          {/* QURAN VERSES */}
+          <section className="py-3 px-3 text-center" style={{ backgroundColor: colors.secondary, color: colors.accent }}>
+            <SectionTitle text="Allah SWT Berfirman" color={colors.primary} />
+            <div className="container" style={{ maxWidth: '500px' }}>
+              <div className="p-3 mb-3 rounded-4 shadow-sm" style={{ backgroundColor: '#fff' }}>
+                <p className="mb-2" style={{ fontSize: '0.95rem' }}>
+                  "Dan segala sesuatu Kami ciptakan berpasang-pasangan agar kamu mengingat (kebesaran Allah)."
+                </p>
+                <p className="mb-0" style={{ fontSize: '0.95rem', color: colors.primary }}>QS. Adh-Dhariyat: 49</p>
+              </div>
+              <div className="p-3 rounded-4 shadow-sm" style={{ backgroundColor: '#fff' }}>
+                <p className="mb-2" style={{ fontSize: '0.95rem' }}>
+                  "Dan di antara tanda-tanda (kebesaran)-Nya ialah Dia menciptakan pasangan-pasangan untukmu dari jenismu sendiri..."
+                </p>
+                <p className="mb-0" style={{ fontSize: '0.95rem', color: colors.primary }}>QS. Ar-Rum: 21</p>
+              </div>
+            </div>
+          </section>
+
+          {/* LOVE STORY */}
+          {invitation.story && (
+            <>
+              <WaveDivider color={colors.secondary} />
+              <section className="py-3 px-3" style={{ backgroundColor: colors.secondary, color: colors.accent }}>
+                <div className="container" style={{ maxWidth: '500px' }}>
+                  <div className="p-3 rounded-5 shadow-sm" style={{ backgroundColor: '#fff' }}>
+                    <SectionTitle text="Kisah Cinta" color={colors.primary} />
+                    <div className="overflow-y-auto p-2" style={{ height: '15rem' }}>
+                      {storyTimeline ? storyTimeline.map((item, idx) => (
+                        <div key={idx} className="row mb-3">
+                          <div className="col-auto position-relative">
+                            <p className="d-flex justify-content-center align-items-center rounded-circle m-0 p-0 z-1 border border-2 position-relative"
+                              style={{ width: '2rem', height: '2rem', backgroundColor: '#fff', borderColor: colors.primary, color: colors.primary }}>
+                              {idx + 1}
+                            </p>
+                            {idx < (storyTimeline?.length || 0) - 1 && (
+                              <hr className="position-absolute top-0 start-50 translate-middle-x border h-100 z-0 m-0" style={{ borderColor: colors.primary, opacity: 0.3 }} />
+                            )}
+                          </div>
+                          <div className="col mt-1 mb-2 ps-0">
+                            <p className="fw-bold mb-1" style={{ fontSize: '0.95rem' }}>
+                              {item.emoji || '💍'} {item.title || ''}
+                            </p>
+                            {item.date && <p className="mb-1" style={{ fontSize: '0.75rem', opacity: 0.6 }}>{item.date}</p>}
+                            <p className="small mb-0" style={{ opacity: 0.8 }}>{item.description || ''}</p>
+                          </div>
+                        </div>
+                      )) : (
+                        <p className="text-center small" style={{ opacity: 0.7 }}>{invitation.story}</p>
+                      )}
                     </div>
+                  </div>
+                </div>
+              </section>
+            </>
+          )}
+
+          {/* WEDDING DATE / COUNTDOWN */}
+          {targetDate && (
+            <>
+              <WaveDivider color={colors.secondary} />
+              <section id="section-event" className="py-3 px-3 text-center" style={{ backgroundColor: colors.secondary, color: colors.accent }}>
+                <SectionTitle text="Moment Bahagia" color={colors.primary} />
+                <div className="py-2">
+                  <CountdownPill targetDate={targetDate} textColor={colors.accent} />
+                </div>
+                <p className="py-2 m-0" style={{ fontSize: '0.95rem', opacity: 0.8 }}>
+                  InsyaAllah kami akan menyelenggarakan acara:
+                </p>
+
+                {/* Akad */}
+                {invitation.date_akad && (
+                  <ScrollRevealSimple>
+                    <div className="py-2">
+                      <h3 className="mb-1" style={{ fontFamily: STYLE_FONT_ESTHETIC, fontSize: '1.75rem', color: colors.primary }}>Akad Nikah</h3>
+                      <p className="my-1" style={{ fontSize: '1rem' }}>{fmtDate(invitation.date_akad)}</p>
+                      {invitation.time_akad && <p className="my-1" style={{ fontSize: '0.9rem', opacity: 0.8 }}>Pukul {invitation.time_akad} WIB</p>}
+                      {invitation.location && <p className="my-1" style={{ fontSize: '0.9rem', opacity: 0.8 }}>{invitation.location}</p>}
+                      {invitation.maps_url && (
+                        <a href={invitation.maps_url} target="_blank" rel="noopener noreferrer"
+                          className="btn btn-sm rounded-pill px-4 mt-2"
+                          style={{ border: `1px solid ${colors.accent}`, color: colors.accent, fontSize: '0.85rem' }}
+                        >
+                          <i className="fa-regular fa-map me-2"></i>Buka Maps
+                        </a>
+                      )}
+                    </div>
+                  </ScrollRevealSimple>
+                )}
+
+                {/* Resepsi */}
+                {invitation.date_resepsi && (
+                  <ScrollRevealSimple delay={200}>
+                    <div className="py-2 mt-3">
+                      <h3 className="mb-1" style={{ fontFamily: STYLE_FONT_ESTHETIC, fontSize: '1.75rem', color: colors.primary }}>Resepsi</h3>
+                      <p className="my-1" style={{ fontSize: '1rem' }}>{fmtDate(invitation.date_resepsi)}</p>
+                      {invitation.time_resepsi && <p className="my-1" style={{ fontSize: '0.9rem', opacity: 0.8 }}>Pukul {invitation.time_resepsi} WIB</p>}
+                      {invitation.location && <p className="my-1" style={{ fontSize: '0.9rem', opacity: 0.8 }}>{invitation.location}</p>}
+                      {invitation.maps_url && (
+                        <a href={invitation.maps_url} target="_blank" rel="noopener noreferrer"
+                          className="btn btn-sm rounded-pill px-4 mt-2"
+                          style={{ border: `1px solid ${colors.accent}`, color: colors.accent, fontSize: '0.85rem' }}
+                        >
+                          <i className="fa-regular fa-map me-2"></i>Buka Maps
+                        </a>
+                      )}
+                    </div>
+                  </ScrollRevealSimple>
+                )}
+              </section>
+            </>
+          )}
+
+          {/* GALLERY */}
+          {photos.length > 0 && (
+            <>
+              <WaveDivider color={colors.secondary} />
+              <section id="section-gallery" className="py-3 px-3 text-center" style={{ backgroundColor: colors.secondary, color: colors.accent }}>
+                <SectionTitle text="Gallery" color={colors.primary} />
+                <div className="d-flex flex-wrap justify-content-center gap-2" style={{ maxWidth: '500px', margin: '0 auto' }}>
+                  {photos.map((photo, idx) => (
+                    <div key={idx} className="overflow-hidden cursor-pointer" style={{ width: 'calc(33.333% - 0.5rem)', aspectRatio: '3/4' }} onClick={() => setLightboxImg(photo)}>
+                      <img src={photo} alt={`Gallery ${idx + 1}`} className="w-100 h-100" style={{ objectFit: 'cover', transition: 'transform 0.3s' }} loading="lazy" />
+                    </div>
+                  ))}
+                </div>
+              </section>
+            </>
+          )}
+
+          {/* WEDDING GIFT */}
+          <>
+            <WaveDivider color={colors.secondary} />
+            <section id="section-gift" className="py-3 px-3 text-center" style={{ backgroundColor: colors.secondary, color: colors.accent }}>
+              <SectionTitle text="Wedding Gift" color={colors.primary} />
+              <p className="mb-4" style={{ fontSize: '0.9rem', opacity: 0.7 }}>
+                Doa restu Anda adalah hadiah terindah. Jika ingin memberi tanda kasih:
+              </p>
+              <div className="d-flex flex-wrap justify-content-center gap-3" style={{ maxWidth: '500px', margin: '0 auto' }}>
+                {[{ name: 'BCA', acc: '123 456 7890' }, { name: 'Mandiri', acc: '987 654 3210' }].map((b) => (
+                  <div key={b.name} className="flex-fill p-3 rounded-4 text-start shadow-sm" style={{ backgroundColor: '#fff', minWidth: '200px' }}>
+                    <p className="fw-bold mb-1" style={{ fontSize: '0.95rem', color: colors.accent }}>{b.name}</p>
+                    <p className="mb-1" style={{ fontSize: '0.75rem', opacity: 0.6 }}>a.n. {invitation.partner_name} &amp; {invitation.partner_name2}</p>
+                    <p className="mb-2" style={{ fontSize: '1.1rem', letterSpacing: '0.1em', color: colors.primary }}>{b.acc}</p>
+                    <button
+                      onClick={() => handleCopy(b.acc.replace(/\s/g, ''), b.name.toLowerCase())}
+                      className="btn btn-sm rounded-pill px-3"
+                      style={{ backgroundColor: colors.accent, color: '#fff', border: 'none', fontSize: '0.8rem' }}
+                    >
+                      {copied === b.name.toLowerCase() ? '✓ Tersalin' : 'Copy'}
+                    </button>
                   </div>
                 ))}
               </div>
-            </ScrollReveal>
-          </section>
-        )}
+            </section>
+          </>
 
-        {/* Event */}
-        <section id="section-event" className="min-h-screen flex flex-col items-center justify-center px-6 py-24 text-center"
-          style={{ background: `linear-gradient(120deg, ${CREAM} 0%, ${WHITE} 100%)` }}
-        >
-          <ScrollReveal>
-            <p className="text-xs uppercase tracking-[0.4em] mb-2" style={{ color: BURGUNDY, fontFamily: '"Cinzel Decorative", cursive' }}>Acara</p>
-            <div className="flex flex-col sm:flex-row gap-6 max-w-xl mx-auto">
-              {invitation.date_akad && (
-                <div className="flex-1 p-6 text-left" style={{
-                  background: WHITE,
-                  border: `1px solid rgba(146,146,146,0.3)`,
-                }}>
-                  <p className="text-xs uppercase tracking-[0.3em] mb-1" style={{ color: BURGUNDY, fontFamily: '"Poppins", sans-serif' }}>Akad Nikah</p>
-                  <p className="text-sm font-semibold mb-1">{formatDate(invitation.date_akad)}</p>
-                  {invitation.time_akad && <p className="text-sm opacity-60 mb-1">Pukul {invitation.time_akad} WIB</p>}
-                  {invitation.location && <p className="text-sm opacity-60">{invitation.location}</p>}
-                  {invitation.maps_url && (
-                    <a href={invitation.maps_url} target="_blank" rel="noopener noreferrer"
-                      className="inline-block mt-4 px-5 py-2 text-xs transition-all hover:opacity-80"
-                      style={{ color: '#747474', border: `1px solid #929292`, fontFamily: '"Poppins", sans-serif' }}
-                    >
-                      Google Map
-                    </a>
-                  )}
-                </div>
-              )}
-              {invitation.date_resepsi && (
-                <div className="flex-1 p-6 text-left" style={{
-                  background: WHITE,
-                  border: `1px solid rgba(146,146,146,0.3)`,
-                }}>
-                  <p className="text-xs uppercase tracking-[0.3em] mb-1" style={{ color: BURGUNDY, fontFamily: '"Poppins", sans-serif' }}>Resepsi</p>
-                  <p className="text-sm font-semibold mb-1">{formatDate(invitation.date_resepsi)}</p>
-                  {invitation.time_resepsi && <p className="text-sm opacity-60 mb-1">Pukul {invitation.time_resepsi} WIB</p>}
-                  {invitation.location && <p className="text-sm opacity-60">{invitation.location}</p>}
-                  {invitation.maps_url && (
-                    <a href={invitation.maps_url} target="_blank" rel="noopener noreferrer"
-                      className="inline-block mt-4 px-5 py-2 text-xs transition-all hover:opacity-80"
-                      style={{ color: '#747474', border: `1px solid #929292`, fontFamily: '"Poppins", sans-serif' }}
-                    >
-                      Google Map
-                    </a>
-                  )}
-                </div>
-              )}
+          {/* WISHES / RSVP */}
+          <WaveDivider color={colors.secondary} />
+          <section id="section-wishes" className="py-3 px-3 text-center" style={{ backgroundColor: colors.secondary, color: colors.accent }}>
+            <SectionTitle text="R.S.V.P" color={colors.primary} />
+            <div style={{ maxWidth: '500px', margin: '0 auto' }}>
+              <RsvpSectionSimple
+                guests={guests}
+                onSubmit={onRsvpSubmit}
+                rsvpStatus={rsvpStatus}
+                rsvpError={rsvpError}
+                accentColor={colors.accent}
+                primaryColor={colors.primary}
+                bgColor="#fff"
+              />
             </div>
-          </ScrollReveal>
-        </section>
+          </section>
 
-        {/* Gallery */}
-        {photos.length > 0 && (
-          <section id="section-gallery" className="min-h-screen flex flex-col items-center justify-center px-6 py-24 text-center" style={{ background: CREAM }}>
-            <ScrollReveal>
-              <p className="text-xs uppercase tracking-[0.4em] mb-2" style={{ color: BURGUNDY, fontFamily: '"Cinzel Decorative", cursive' }}>Gallery</p>
-            </ScrollReveal>
-            <div className="grid grid-cols-2 max-sm:grid-cols-2 sm:grid-cols-3 gap-2 max-w-3xl mx-auto w-full px-4">
-              {photos.map((photo, idx) => (
-                <ScrollReveal key={idx}>
-                  <div className="aspect-[3/4] overflow-hidden cursor-pointer group" onClick={() => setLightboxImg(photo)}>
-                    <img src={photo} alt={`Gallery ${idx + 1}`} className="w-full h-full object-cover transition-transform duration-500 group-hover:scale-110" />
-                  </div>
-                </ScrollReveal>
+          {/* FOOTER */}
+          <footer className="text-center py-4 px-3" style={{ backgroundColor: colors.accent, color: '#fff' }}>
+            <p className="mb-1" style={{ fontFamily: STYLE_FONT_ESTHETIC, fontSize: '1.5rem' }}>Terima Kasih</p>
+            <p className="mb-2 small px-3" style={{ opacity: 0.8 }}>
+              Merupakan suatu kebahagiaan dan kehormatan apabila Bapak/Ibu/Saudara/i berkenan hadir memberikan doa restu.
+            </p>
+            <p className="mb-0" style={{ fontFamily: STYLE_FONT_ESTHETIC, fontSize: '2rem', color: colors.primary }}>
+              {invitation.partner_name} &amp; {invitation.partner_name2}
+            </p>
+            <p className="mt-3 mb-0 small" style={{ opacity: 0.5 }}>&copy; 2025 Undangan Digital</p>
+          </footer>
+
+          {/* Music Button */}
+          {invitation.music_url && (
+            <button onClick={toggleMusic}
+              className="btn btn-sm rounded-circle position-fixed shadow d-flex align-items-center justify-content-center"
+              style={{ bottom: '5rem', right: '1rem', zIndex: 40, width: '3rem', height: '3rem', backgroundColor: colors.primary, color: '#fff', border: 'none' }}
+            >
+              {musicPlaying ? '🔊' : '🔇'}
+            </button>
+          )}
+
+          {/* Bottom Navigation */}
+          <nav className="navbar fixed-bottom navbar-expand d-flex justify-content-center py-1" style={{ backgroundColor: colors.accent }}>
+            <ul className="navbar-nav gap-2">
+              {[
+                { id: 'section-home', icon: 'fa-house', label: 'Home' },
+                { id: 'section-bride', icon: 'fa-heart', label: 'Couple' },
+                { id: 'section-event', icon: 'fa-calendar', label: 'Event' },
+                { id: 'section-gallery', icon: 'fa-image', label: 'Gallery' },
+                { id: 'section-wishes', icon: 'fa-comment', label: 'Wishes' },
+              ].map((item) => (
+                <li key={item.id} className="nav-item">
+                  <a className="nav-link d-flex flex-column align-items-center px-2" href={`#${item.id}`} style={{ color: 'rgba(255,255,255,0.7)', fontSize: '0.7rem' }}
+                    onClick={(e) => { e.preventDefault(); document.getElementById(item.id)?.scrollIntoView({ behavior: 'smooth' }); }}>
+                    <i className={`fa-solid ${item.icon}`} style={{ fontSize: '1.1rem' }}></i>
+                    <span className="mt-0">{item.label}</span>
+                  </a>
+                </li>
               ))}
+            </ul>
+          </nav>
+
+          {/* Lightbox */}
+          {lightboxImg && (
+            <div className="position-fixed inset-0 d-flex align-items-center justify-content-center cursor-pointer" style={{ zIndex: 1055, backgroundColor: 'rgba(0,0,0,0.9)' }} onClick={() => setLightboxImg(null)}>
+              <img src={lightboxImg} alt="Gallery" className="mw-100 mh-100 p-3" style={{ objectFit: 'contain' }} />
             </div>
-          </section>
-        )}
+          )}
 
-        {/* Love Story */}
-        {invitation.story && (
-          <section className="min-h-screen flex flex-col items-center justify-center px-6 py-24 text-center" style={{ background: WHITE }}>
-            <ScrollReveal>
-              <p className="text-xs uppercase tracking-[0.4em] mb-2" style={{ color: BURGUNDY, fontFamily: '"Cinzel Decorative", cursive' }}>Our Story</p>
-            </ScrollReveal>
-            <div className="max-w-lg mx-auto w-full px-4 text-left">
-              {storyTimeline ? storyTimeline.map((item, idx) => (
-                <ScrollReveal key={idx}>
-                  <div className="flex gap-5 mb-8">
-                    <div className="flex flex-col items-center">
-                      <div className="w-3 h-3 flex-shrink-0" style={{ backgroundColor: BURGUNDY, transform: 'rotate(45deg)' }} />
-                      {idx < storyTimeline.length - 1 && <div className="w-px flex-1 mt-1" style={{ backgroundColor: `${BURGUNDY}33` }} />}
-                    </div>
-                    <div className="flex-1 pb-4">
-                      <p className="text-xs opacity-60 mb-1">{item.date || ''}</p>
-                      <p className="text-base font-semibold mb-1" style={{ fontFamily: '"Playfair Display SC", serif', color: BURGUNDY }}>{item.title || ''}</p>
-                      <p className="text-sm opacity-70 leading-relaxed">{item.description || ''}</p>
-                    </div>
-                  </div>
-                </ScrollReveal>
-              )) : <ScrollReveal><p className="text-sm opacity-70 leading-relaxed italic">{invitation.story}</p></ScrollReveal>}
-            </div>
-          </section>
-        )}
-
-        {/* Gift */}
-        <section className="py-24 px-6 text-center" style={{ background: CREAM }}>
-          <ScrollReveal>
-            <p className="text-xs uppercase tracking-[0.4em] mb-2" style={{ color: BURGUNDY, fontFamily: '"Cinzel Decorative", cursive' }}>Wedding Gift</p>
-            <p className="text-sm opacity-60 mb-10">Doa restu Anda adalah hadiah terindah. Jika ingin memberi tanda kasih:</p>
-          </ScrollReveal>
-          <div className="flex flex-col sm:flex-row gap-6 max-w-lg mx-auto px-4">
-            {[{ name: 'BCA', acc: '123 456 7890' }, { name: 'Mandiri', acc: '987 654 3210' }].map((b) => (
-              <ScrollReveal key={b.name}>
-                <div className="flex-1 p-6 text-left" style={{ background: WHITE }}>
-                  <p className="text-sm font-semibold mb-1" style={{ color: BURGUNDY }}>{b.name}</p>
-                  <p className="text-xs opacity-60 mb-1">a.n. {invitation.partner_name} &amp; {invitation.partner_name2}</p>
-                  <p className="text-lg tracking-wider">{b.acc}</p>
-                  <button type="button" onClick={() => handleCopy(b.acc.replace(/\s/g, ''), b.name.toLowerCase())}
-                    className="mt-3 px-4 py-1.5 text-xs transition-all hover:opacity-80"
-                    style={{ background: LIGHT_GRAY, color: WHITE, border: 'none', fontFamily: '"Poppins", sans-serif' }}>
-                    {copied === b.name.toLowerCase() ? '✓ Tersalin' : 'Salin Rekening'}
-                  </button>
-                </div>
-              </ScrollReveal>
-            ))}
-          </div>
-        </section>
-
-        {/* Wishes */}
-        <section id="section-wishes" className="py-24 px-6 text-center" style={{ background: WHITE }}>
-          <ScrollReveal>
-            <p className="text-xs uppercase tracking-[0.4em] mb-2" style={{ color: BURGUNDY, fontFamily: '"Cinzel Decorative", cursive' }}>R.S.V.P</p>
-          </ScrollReveal>
-          <RsvpSection guests={guests} onSubmit={onRsvpSubmit} rsvpStatus={rsvpStatus} rsvpError={rsvpError}
-            primaryColor={BURGUNDY} accentColor={DARK} bgColor={CREAM} />
-        </section>
-
-        {/* Footer */}
-        <footer className="py-16 px-6 text-center" style={{ background: BURGUNDY }}>
-          <p className="text-white/70 text-sm mb-6 max-w-xs mx-auto leading-relaxed" style={{ fontFamily: '"Poppins", sans-serif' }}>
-            Merupakan kebahagiaan dan kehormatan apabila Anda berkenan hadir memberikan doa restu.
-          </p>
-          <p className="text-white/40 text-xs uppercase tracking-[0.3em] mb-3">The Wedding of</p>
-          <p className="text-2xl text-white mb-2" style={{ fontFamily: '"Playfair Display SC", serif', color: WARM_CREAM }}>
-            {invitation.partner_name} &amp; {invitation.partner_name2}
-          </p>
-          <p className="text-white/30 text-xs mt-8">© 2025 — Made with Love</p>
-        </footer>
-
-        {invitation.music_url && (
-          <button type="button" onClick={toggleMusic}
-            className="fixed bottom-20 right-4 z-40 w-12 h-12 flex items-center justify-center shadow-lg transition-all hover:scale-110"
-            style={{ background: BURGUNDY, color: WHITE }}>
-            {musicPlaying ? '🔊' : '🔇'}
-          </button>
-        )}
-
-        <nav className="fixed bottom-0 left-0 right-0 z-40" style={{ background: `${DARK}ee`, backdropFilter: 'blur(8px)' }}>
-          <div className="flex justify-around items-center py-2 max-w-lg mx-auto">
-            {[{ id: 'section-bismillah', icon: '@' }, { id: 'section-couple', icon: 'P' }, { id: 'section-event', icon: 'c' }, { id: 'section-gallery', icon: ';' }, { id: 'section-wishes', icon: '6' }].map((item) => (
-              <button key={item.id} type="button" onClick={() => scrollTo(item.id)}
-                className="flex flex-col items-center gap-0.5 px-3 py-1 transition-all hover:opacity-80">
-                <span className="text-lg text-white/80" style={{ fontFamily: '"wedding icon", sans-serif' }}>{item.icon}</span>
-                <span className="text-[10px] uppercase tracking-[0.1em] text-white/60">{item.id.replace('section-', '')}</span>
-              </button>
-            ))}
-          </div>
-        </nav>
-
-        {lightboxImg && (
-          <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/90 p-6 cursor-pointer" onClick={() => setLightboxImg(null)}>
-            <img src={lightboxImg} alt="Gallery" className="max-w-full max-h-full object-contain" />
-          </div>
-        )}
-        <ScrollToTop primaryColor={BURGUNDY} />
+        </div>
       </div>
+
+      <style jsx>{`
+        @keyframes scrollAnim {
+          0%, 100% { transform: translateY(0); }
+          50% { transform: translateY(6px); }
+        }
+        .font-esthetic { font-family: 'Sacramento', cursive !important; }
+        .fa-solid, .fa-regular { font-family: 'Font Awesome 6 Free' !important; }
+      `}</style>
+    </div>
+  );
+}
+
+// Simplified RsvpSection inline component
+function RsvpSectionSimple({
+  guests, onSubmit, rsvpStatus, rsvpError, accentColor, primaryColor, bgColor,
+}: {
+  guests: any[]; onSubmit: (form: any) => Promise<void>; rsvpStatus: string; rsvpError: string;
+  accentColor: string; primaryColor: string; bgColor: string;
+}) {
+  const [form, setForm] = useState({ name: '', is_attending: true, guest_count: 1, message: '' });
+
+  const handleSubmit = (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!form.name.trim()) return;
+    onSubmit(form);
+    setForm({ name: '', is_attending: true, guest_count: 1, message: '' });
+  };
+
+  return (
+    <div className="p-3 rounded-4 text-start" style={{ backgroundColor: bgColor, boxShadow: '0 2px 12px rgba(0,0,0,0.08)' }}>
+      <form onSubmit={handleSubmit}>
+        <div className="mb-2">
+          <input type="text" className="form-control form-control-sm rounded-pill" placeholder="Nama Anda"
+            value={form.name} onChange={(e) => setForm({ ...form, name: e.target.value })} required />
+        </div>
+        <div className="mb-2">
+          <select className="form-select form-select-sm rounded-pill" style={{ fontSize: '0.875rem' }}
+            value={form.is_attending ? 'hadir' : 'tidak'}
+            onChange={(e) => setForm({ ...form, is_attending: e.target.value === 'hadir' })}
+          >
+            <option value="hadir">Hadir</option>
+            <option value="tidak">Tidak Hadir</option>
+          </select>
+        </div>
+        {form.is_attending && (
+          <div className="mb-2">
+            <select className="form-select form-select-sm rounded-pill" style={{ fontSize: '0.875rem' }}
+              value={form.guest_count}
+              onChange={(e) => setForm({ ...form, guest_count: parseInt(e.target.value) })}
+            >
+              {[1, 2, 3, 4, 5].map((n) => <option key={n} value={n}>{n} tamu</option>)}
+            </select>
+          </div>
+        )}
+        <div className="mb-2">
+          <textarea className="form-control form-control-sm rounded-4" rows={2} placeholder="Ucapan & Doa"
+            value={form.message} onChange={(e) => setForm({ ...form, message: e.target.value })} maxLength={200} />
+          <small style={{ fontSize: '0.7rem', opacity: 0.5 }}>{form.message.length}/200</small>
+        </div>
+        <button type="submit" className="btn btn-sm w-100 rounded-pill py-2"
+          style={{ backgroundColor: accentColor, color: '#fff', border: 'none', fontSize: '0.85rem' }}
+          disabled={rsvpStatus === 'submitting'}
+        >
+          {rsvpStatus === 'submitting' ? 'Mengirim...' : 'Kirim Konfirmasi'}
+        </button>
+      </form>
+
+      {rsvpStatus === 'success' && <div className="alert alert-success mt-2 py-2 small mb-0 rounded-pill">Terima kasih! Konfirmasi Anda telah tersimpan.</div>}
+      {rsvpStatus === 'error' && <div className="alert alert-danger mt-2 py-2 small mb-0 rounded-pill">{rsvpError || 'Gagal mengirim, coba lagi.'}</div>}
+
+      {guests.length > 0 && (
+        <div className="mt-3">
+          <hr />
+          <p className="fw-bold mb-2" style={{ fontSize: '0.9rem', color: accentColor }}>Ucapan ({guests.length})</p>
+          <div style={{ maxHeight: '200px', overflowY: 'auto' }}>
+            {guests.slice(0, 20).map((g) => (
+              <div key={g.id} className="mb-2 p-2 rounded-3" style={{ backgroundColor: '#f8f9fa' }}>
+                <p className="fw-bold mb-0" style={{ fontSize: '0.85rem' }}>{g.name}</p>
+                {g.message && <p className="mb-0 small" style={{ opacity: 0.8 }}>{g.message}</p>}
+                <small style={{ opacity: 0.5, fontSize: '0.7rem' }}>{g.is_attending ? '✅ Hadir' : '❌ Tidak Hadir'} {g.guest_count > 1 ? `(${g.guest_count} org)` : ''}</small>
+              </div>
+            ))}
+          </div>
+        </div>
+      )}
     </div>
   );
 }
