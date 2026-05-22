@@ -53,7 +53,7 @@ export async function GET(
 
   // Get recent RSVPs (last 10)
   const recentRsvps = db.prepare(`
-    SELECT name, is_attending, guest_count, message, created_at
+    SELECT id, name, is_attending, guest_count, message, created_at
     FROM guests
     WHERE invitation_id = ? AND message IS NOT NULL
     ORDER BY created_at DESC

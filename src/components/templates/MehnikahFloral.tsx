@@ -1,6 +1,6 @@
 'use client';
 
-import { useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import Countdown from './Countdown';
 import RsvpSection from './RsvpSection';
 import { TemplateProps } from './types';
@@ -37,14 +37,23 @@ function FloralHeader() {
 }
 
 export default function MehnikahFloral({ invitation, guests, onRsvpSubmit, rsvpStatus, rsvpError }: TemplateProps) {
-  const photos: string[] = JSON.parse(invitation.gallery_photos || '[]');
+  let photos: string[];
+  try {
+    photos = JSON.parse(invitation.gallery_photos || '[]') as string[];
+  } catch {
+    photos = [];
+  }
   const targetDate = invitation.date_akad || invitation.date_resepsi;
   const [copied, setCopied] = useState<string | null>(null);
+  const copyTimerRef = useRef<ReturnType<typeof setTimeout>>(undefined);
+
+  useEffect(() => () => clearTimeout(copyTimerRef.current), []);
 
   const handleCopy = (text: string, key: string) => {
     navigator.clipboard.writeText(text).then(() => {
       setCopied(key);
-      setTimeout(() => setCopied(null), 2000);
+      clearTimeout(copyTimerRef.current);
+      copyTimerRef.current = setTimeout(() => setCopied(null), 2000);
     });
   };
 

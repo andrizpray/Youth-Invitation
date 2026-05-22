@@ -76,7 +76,8 @@ export async function POST(
     const normalizedName = body.name.trim().toLowerCase();
 
     const isAttending = body.is_attending ? 1 : 0;
-    const guestCount = Math.max(1, Math.min(10, parseInt(body.guest_count) || 1));
+    const rawCount = parseInt(body.guest_count, 10);
+    const guestCount = Number.isNaN(rawCount) ? 1 : Math.max(1, Math.min(10, rawCount));
 
     // Check if guest already exists by normalized name
     const existingGuest = db.prepare(

@@ -1,6 +1,6 @@
 'use client';
 
-import { useEffect, useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import { useRouter } from 'next/navigation';
 
 interface Template {
@@ -33,6 +33,9 @@ export default function AdminTemplatesPage() {
   const [creating, setCreating] = useState(false);
 
   const router = useRouter();
+  const notifyTimerRef = useRef<ReturnType<typeof setTimeout>>(undefined);
+
+  useEffect(() => () => clearTimeout(notifyTimerRef.current), []);
 
   const loadTemplates = () => {
     fetch('/api/admin/templates')
@@ -51,7 +54,8 @@ export default function AdminTemplatesPage() {
   const notify = (msg: string, isError = false) => {
     if (isError) { setActionError(msg); setActionSuccess(''); }
     else { setActionSuccess(msg); setActionError(''); }
-    setTimeout(() => { setActionError(''); setActionSuccess(''); }, 3000);
+    clearTimeout(notifyTimerRef.current);
+    notifyTimerRef.current = setTimeout(() => { setActionError(''); setActionSuccess(''); }, 3000);
   };
 
   const handleToggleActive = async (t: Template) => {

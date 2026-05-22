@@ -46,6 +46,9 @@ export default function GuestsPage() {
   const [csvResult, setCsvResult] = useState<{ added: number; errors?: string[] } | null>(null);
 
   const fileInputRef = useRef<HTMLInputElement>(null);
+  const copyTimerRef = useRef<ReturnType<typeof setTimeout>>(undefined);
+
+  useEffect(() => () => clearTimeout(copyTimerRef.current), []);
 
   const loadGuests = async () => {
     setLoading(true);
@@ -111,7 +114,8 @@ export default function GuestsPage() {
     const url = `${window.location.origin}/${invitation?.slug}?tamu=${code}`;
     navigator.clipboard.writeText(url);
     setCopiedCode(code);
-    setTimeout(() => setCopiedCode(null), 2000);
+    clearTimeout(copyTimerRef.current);
+    copyTimerRef.current = setTimeout(() => setCopiedCode(null), 2000);
   };
 
   const handleSendWa = async (guestId: string) => {

@@ -23,7 +23,12 @@ export async function GET(
     return NextResponse.json({ error: 'Undangan tidak ditemukan' }, { status: 404 });
   }
 
-  const photos = invitation.gallery_photos ? JSON.parse(invitation.gallery_photos) : [];
+  let photos: string[] = [];
+  try {
+    photos = invitation.gallery_photos ? JSON.parse(invitation.gallery_photos) : [];
+  } catch {
+    photos = [];
+  }
 
   return NextResponse.json({ photos });
 }
@@ -112,7 +117,12 @@ export async function POST(
       );
     }
 
-    const photos = invitation.gallery_photos ? JSON.parse(invitation.gallery_photos) : [];
+    let photos: string[] = [];
+    try {
+      photos = invitation.gallery_photos ? JSON.parse(invitation.gallery_photos) : [];
+    } catch {
+      photos = [];
+    }
 
     if (photos.length >= 10) {
       return NextResponse.json({ error: 'Maksimal 10 foto' }, { status: 400 });
@@ -159,7 +169,12 @@ export async function DELETE(
     return NextResponse.json({ error: 'URL foto diperlukan' }, { status: 400 });
   }
 
-  let photos = invitation.gallery_photos ? JSON.parse(invitation.gallery_photos) : [];
+  let photos: string[] = [];
+  try {
+    photos = invitation.gallery_photos ? JSON.parse(invitation.gallery_photos) : [];
+  } catch {
+    photos = [];
+  }
   photos = photos.filter((p: string) => p !== url);
 
   db.prepare(

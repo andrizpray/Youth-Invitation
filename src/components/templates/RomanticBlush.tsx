@@ -5,8 +5,18 @@ import RsvpSection from './RsvpSection';
 import { TemplateProps } from './types';
 
 export default function RomanticBlush({ invitation, guests, onRsvpSubmit, rsvpStatus, rsvpError }: TemplateProps) {
-  const colors = JSON.parse(invitation.colors) as { primary: string; secondary: string; accent: string };
-  const photos: string[] = JSON.parse(invitation.gallery_photos || '[]');
+  let colors: { primary: string; secondary: string; accent: string };
+  try {
+    colors = JSON.parse(invitation.colors) as { primary: string; secondary: string; accent: string };
+  } catch {
+    colors = { primary: '#e8b4b8', secondary: '#fdf6f6', accent: '#8b4a4f' };
+  }
+  let photos: string[];
+  try {
+    photos = JSON.parse(invitation.gallery_photos || '[]') as string[];
+  } catch {
+    photos = [];
+  }
   const targetDate = invitation.date_akad || invitation.date_resepsi;
 
   const sectionClass = 'min-h-screen flex flex-col items-center justify-center px-6 py-20 text-center';

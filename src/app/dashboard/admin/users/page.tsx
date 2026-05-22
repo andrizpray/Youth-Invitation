@@ -1,6 +1,6 @@
 'use client';
 
-import { useEffect, useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import { useRouter } from 'next/navigation';
 
 interface UserRow {
@@ -26,6 +26,9 @@ export default function AdminUsersPage() {
   const [creating, setCreating] = useState(false);
 
   const router = useRouter();
+  const notifyTimerRef = useRef<ReturnType<typeof setTimeout>>(undefined);
+
+  useEffect(() => () => clearTimeout(notifyTimerRef.current), []);
 
   const loadUsers = () => {
     fetch('/api/admin/users')
@@ -44,7 +47,8 @@ export default function AdminUsersPage() {
   const notify = (msg: string, isError = false) => {
     if (isError) { setActionError(msg); setActionSuccess(''); }
     else { setActionSuccess(msg); setActionError(''); }
-    setTimeout(() => { setActionError(''); setActionSuccess(''); }, 3000);
+    clearTimeout(notifyTimerRef.current);
+    notifyTimerRef.current = setTimeout(() => { setActionError(''); setActionSuccess(''); }, 3000);
   };
 
   const handleRoleChange = async (id: string, newRole: string) => {

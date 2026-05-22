@@ -1,6 +1,6 @@
 'use client';
 
-import { useEffect, useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import { useParams, useRouter } from 'next/navigation';
 import { MediaUploader, MusicUploader } from '@/components/MediaUploaders';
 
@@ -51,6 +51,13 @@ export default function EditInvitationPage() {
   const [templateSaving, setTemplateSaving] = useState(false);
   const [templateSaved, setTemplateSaved] = useState(false);
   const [templateError, setTemplateError] = useState('');
+  const templateSavedTimerRef = useRef<ReturnType<typeof setTimeout>>(undefined);
+  const savedTimerRef = useRef<ReturnType<typeof setTimeout>>(undefined);
+
+  useEffect(() => () => {
+    clearTimeout(templateSavedTimerRef.current);
+    clearTimeout(savedTimerRef.current);
+  }, []);
 
   const [form, setForm] = useState({
     partner_name: '',
@@ -107,7 +114,8 @@ export default function EditInvitationPage() {
         const updated = await res.json();
         setInvitation(prev => prev ? { ...prev, ...updated.invitation } : prev);
         setTemplateSaved(true);
-        setTimeout(() => setTemplateSaved(false), 3000);
+        clearTimeout(templateSavedTimerRef.current);
+        templateSavedTimerRef.current = setTimeout(() => setTemplateSaved(false), 3000);
       } else {
         const err = await res.json();
         setTemplateError(err.error || 'Gagal mengganti template');
@@ -136,7 +144,8 @@ export default function EditInvitationPage() {
         const updated = await res.json();
         setInvitation(prev => prev ? { ...prev, ...updated.invitation } : prev);
         setSaved(true);
-        setTimeout(() => setSaved(false), 3000);
+        clearTimeout(savedTimerRef.current);
+        savedTimerRef.current = setTimeout(() => setSaved(false), 3000);
       } else {
         const err = await res.json();
         setSaveError(err.error || 'Gagal menyimpan');

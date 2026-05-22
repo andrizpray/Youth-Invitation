@@ -1,6 +1,6 @@
 'use client';
 
-import { useEffect, useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import Link from 'next/link';
 
 interface Invitation {
@@ -21,6 +21,9 @@ export default function InvitationsPage() {
   const [loading, setLoading] = useState(true);
   const [copiedId, setCopiedId] = useState<string | null>(null);
   const [actionError, setActionError] = useState('');
+  const copyTimerRef = useRef<ReturnType<typeof setTimeout>>(undefined);
+
+  useEffect(() => () => clearTimeout(copyTimerRef.current), []);
 
   const loadInvitations = () => {
     fetch('/api/invitations')
@@ -69,7 +72,8 @@ export default function InvitationsPage() {
     const url = `${window.location.origin}/${slug}`;
     navigator.clipboard.writeText(url);
     setCopiedId(id);
-    setTimeout(() => setCopiedId(null), 2000);
+    clearTimeout(copyTimerRef.current);
+    copyTimerRef.current = setTimeout(() => setCopiedId(null), 2000);
   };
 
   if (loading) {

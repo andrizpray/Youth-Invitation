@@ -15,6 +15,7 @@ interface Stats {
 }
 
 interface RsvpItem {
+  id: string;
   name: string;
   is_attending: number;
   guest_count: number;
@@ -41,6 +42,7 @@ export default function AnalyticsPage() {
   const invitationId = params.id as string;
 
   const [loading, setLoading] = useState(true);
+  const [loadError, setLoadError] = useState('');
   const [invitation, setInvitation] = useState<Invitation | null>(null);
   const [stats, setStats] = useState<Stats | null>(null);
   const [recentRsvps, setRecentRsvps] = useState<RsvpItem[]>([]);
@@ -60,7 +62,7 @@ export default function AnalyticsPage() {
       setRecentRsvps(data.recentRsvps || []);
       setTimeline(data.rsvpTimeline || []);
     } catch {
-      console.error('Failed to load analytics');
+      setLoadError('Gagal memuat data analitik');
     } finally {
       setLoading(false);
     }
@@ -77,7 +79,7 @@ export default function AnalyticsPage() {
   if (!invitation || !stats) {
     return (
       <div className="text-center py-20 text-gray-500">
-        Data tidak ditemukan
+        {loadError || 'Data tidak ditemukan'}
       </div>
     );
   }
@@ -203,8 +205,8 @@ export default function AnalyticsPage() {
         <div className="bg-white rounded-2xl p-6 border border-gray-100 mb-6">
           <h2 className="font-semibold text-gray-900 mb-4">Timeline RSVP</h2>
           <div className="flex items-end gap-1 h-32">
-            {timeline.map((item, i) => (
-              <div key={i} className="flex-1 flex flex-col items-center gap-1">
+            {timeline.map((item) => (
+              <div key={item.date} className="flex-1 flex flex-col items-center gap-1">
                 <div
                   className="w-full bg-amber-400 rounded-t transition-all"
                   style={{ height: `${(item.count / maxCount) * 100}%`, minHeight: 4 }}
@@ -243,8 +245,8 @@ export default function AnalyticsPage() {
           <p className="text-gray-500 text-sm">Belum ada RSVP masuk</p>
         ) : (
           <div className="space-y-3">
-            {recentRsvps.map((rsvp, i) => (
-              <div key={i} className="flex items-center justify-between py-2 border-b border-gray-50 last:border-0">
+            {recentRsvps.map((rsvp) => (
+              <div key={rsvp.id} className="flex items-center justify-between py-2 border-b border-gray-50 last:border-0">
                 <div>
                   <p className="font-medium text-gray-900">{rsvp.name}</p>
                   <p className="text-sm text-gray-500">
