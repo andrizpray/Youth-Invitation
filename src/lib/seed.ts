@@ -14,6 +14,7 @@ const templates = [
   { name: 'Royal Purple', slug: 'royal-purple', description: 'Nuansa ungu kerajaan yang mewah', category: 'klasik', colors: '{"primary":"#6a1b9a","secondary":"#f3e5f5","accent":"#12005e"}' },
   { name: 'Islami Elegant', slug: 'islami-elegant', description: 'Tema islami elegan dengan latar navy gelap dan aksen emas', category: 'islami', colors: '{"primary":"#c9a84c","secondary":"#0a1628","accent":"#e8d5a3"}' },
   { name: 'Modern Minimal', slug: 'modern-minimal', description: 'Desain modern minimalis bersih dengan tipografi ringan', category: 'modern', colors: '{"primary":"#2d2d2d","secondary":"#f8f8f8","accent":"#888888"}' },
+  { name: 'Mehnikah Floral', slug: 'mehnikah-floral', description: 'Tema rose gold floral yang elegan dan hangat', category: 'modern', colors: '{"primary":"#c9a97a","secondary":"#fdf8f3","accent":"#8b6f5a"}' },
 ];
 
 export async function seedTemplates() {

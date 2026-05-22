@@ -1,6 +1,6 @@
 'use client';
 
-import { useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import Countdown from './Countdown';
 import RsvpSection from './RsvpSection';
 import ScrollReveal from './ScrollReveal';
@@ -22,6 +22,19 @@ export default function RomanticBlush({ invitation, guests, onRsvpSubmit, rsvpSt
   }
 
   const [lightboxImg, setLightboxImg] = useState<string | null>(null);
+  const [copied, setCopied] = useState<string | null>(null);
+  const copyTimerRef = useRef<ReturnType<typeof setTimeout>>(undefined);
+
+  useEffect(() => () => clearTimeout(copyTimerRef.current), []);
+
+  const handleCopy = (text: string, key: string) => {
+    navigator.clipboard.writeText(text).then(() => {
+      setCopied(key);
+      clearTimeout(copyTimerRef.current);
+      copyTimerRef.current = setTimeout(() => setCopied(null), 2000);
+    });
+  };
+
   const targetDate = invitation.date_akad || invitation.date_resepsi;
   const sectionClass = 'min-h-screen flex flex-col items-center justify-center px-6 py-20 text-center';
 
@@ -217,6 +230,47 @@ export default function RomanticBlush({ invitation, guests, onRsvpSubmit, rsvpSt
         </section>
       )}
 
+      {/* Gift */}
+      <section className={sectionClass} style={{ backgroundColor: colors.primary + '15' }}>
+        <ScrollReveal className="w-full">
+          <p className="text-xs uppercase tracking-[0.3em] mb-6" style={{ color: '#9b6b97' }}>Kirim Hadiah</p>
+          <div className="w-16 h-px mx-auto mb-6" style={{ backgroundColor: colors.primary }} />
+          <p className="text-sm opacity-85 max-w-xs mx-auto leading-relaxed mb-8">
+            Doa restu Anda adalah hadiah terbesar. Namun jika ingin memberi, Anda dapat mengirimkan melalui:
+          </p>
+          <div className="flex flex-col gap-4 max-w-xs mx-auto w-full">
+            {[
+              { bank: 'Bank BCA', no: '1234567890', name: 'Andriz Prayoga', key: 'bca' },
+              { bank: 'Bank Mandiri', no: '0987654321', name: 'Siti Nurhaliza', key: 'mandiri' },
+            ].map((item) => (
+              <div
+                key={item.key}
+                className="p-5 rounded-2xl text-left"
+                style={{ backgroundColor: colors.secondary, border: `1px solid ${colors.primary}33`, boxShadow: `0 4px 24px ${colors.primary}18` }}
+              >
+                <p className="text-xs uppercase tracking-widest mb-3" style={{ color: colors.accent + '88' }}>Transfer Bank</p>
+                <p className="text-sm font-semibold mb-0.5" style={{ color: colors.accent }}>{item.bank}</p>
+                <p className="text-base font-bold mb-2" style={{ color: colors.accent }}>{item.no}</p>
+                <p className="text-xs mb-4 opacity-70">a.n. {item.name}</p>
+                <button
+                  type="button"
+                  onClick={() => handleCopy(item.no, item.key)}
+                  className="w-full rounded-xl text-sm font-semibold transition-all active:scale-95"
+                  style={{
+                    minHeight: '44px',
+                    ...(copied === item.key
+                      ? { backgroundColor: colors.primary, color: colors.accent }
+                      : { border: `1.5px solid ${colors.primary}`, color: colors.accent, backgroundColor: 'transparent' }),
+                  }}
+                >
+                  {copied === item.key ? '✓ Tersalin!' : 'Salin Nomor Rekening'}
+                </button>
+              </div>
+            ))}
+          </div>
+        </ScrollReveal>
+      </section>
+
       {/* RSVP */}
       <section className={sectionClass} style={{ backgroundColor: colors.secondary }}>
         <ScrollReveal className="w-full">
@@ -239,11 +293,13 @@ export default function RomanticBlush({ invitation, guests, onRsvpSubmit, rsvpSt
         className="py-16 px-6 text-center"
         style={{ background: `linear-gradient(180deg, ${colors.primary}33, ${colors.accent}cc)` }}
       >
-        <p className="text-white/70 text-xs uppercase tracking-widest mb-6">~ Dengan Cinta ~</p>
-        <p className="text-5xl text-white" style={{ fontFamily: '"Great Vibes", cursive' }}>
-          {invitation.partner_name} & {invitation.partner_name2}
-        </p>
-        <p className="text-white/60 text-xs mt-8">Terima kasih atas doa dan restu Anda</p>
+        <ScrollReveal>
+          <p className="text-white/70 text-xs uppercase tracking-widest mb-6">~ Dengan Cinta ~</p>
+          <p className="text-5xl text-white" style={{ fontFamily: '"Great Vibes", cursive' }}>
+            {invitation.partner_name} & {invitation.partner_name2}
+          </p>
+          <p className="text-white/60 text-xs mt-8">Terima kasih atas doa dan restu Anda</p>
+        </ScrollReveal>
       </footer>
 
       {/* Lightbox */}
@@ -275,6 +331,16 @@ export default function RomanticBlush({ invitation, guests, onRsvpSubmit, rsvpSt
       )}
 
       <ScrollToTop primaryColor={colors.primary} />
+
+      {/* Copy toast */}
+      {copied && (
+        <div
+          className="fixed bottom-20 left-1/2 z-50 px-5 py-3 rounded-full text-sm text-white shadow-xl pointer-events-none"
+          style={{ backgroundColor: colors.accent, transform: 'translateX(-50%)', animation: 'toastSlideUp 0.3s ease-out forwards' }}
+        >
+          ✓ Nomor rekening disalin!
+        </div>
+      )}
     </div>
   );
 }

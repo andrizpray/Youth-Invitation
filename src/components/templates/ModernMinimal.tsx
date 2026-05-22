@@ -1,6 +1,6 @@
 'use client';
 
-import { useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import Countdown from './Countdown';
 import RsvpSection from './RsvpSection';
 import ScrollReveal from './ScrollReveal';
@@ -94,6 +94,19 @@ export default function ModernMinimal({ invitation, guests, onRsvpSubmit, rsvpSt
   }
 
   const [lightboxImg, setLightboxImg] = useState<string | null>(null);
+  const [copied, setCopied] = useState<string | null>(null);
+  const copyTimerRef = useRef<ReturnType<typeof setTimeout>>(undefined);
+
+  useEffect(() => () => clearTimeout(copyTimerRef.current), []);
+
+  const handleCopy = (text: string, key: string) => {
+    navigator.clipboard.writeText(text).then(() => {
+      setCopied(key);
+      clearTimeout(copyTimerRef.current);
+      copyTimerRef.current = setTimeout(() => setCopied(null), 2000);
+    });
+  };
+
   const targetDate = invitation.date_akad || invitation.date_resepsi;
 
   const nearBlack = colors.primary || '#2d2d2d';
@@ -365,6 +378,53 @@ export default function ModernMinimal({ invitation, guests, onRsvpSubmit, rsvpSt
 
       <ThinRule color={nearBlack} />
 
+      {/* ── Gift ── */}
+      <section className="py-24 px-8 text-center" style={{ backgroundColor: `${nearBlack}06` }}>
+        <ScrollReveal>
+          <SectionLabel text="Wedding Gift" color={gray} />
+
+          <div className="max-w-sm mx-auto">
+            <p className="text-sm leading-relaxed mb-8" style={{ color: gray }}>
+              Doa restu Anda adalah hadiah terbesar. Namun jika ingin memberi, Anda dapat mengirimkan melalui:
+            </p>
+            <div className="flex flex-col gap-4">
+              {[
+                { bank: 'Bank BCA', no: '1234567890', name: 'Andriz Prayoga', key: 'bca' },
+                { bank: 'Bank Mandiri', no: '0987654321', name: 'Siti Nurhaliza', key: 'mandiri' },
+              ].map((item) => (
+                <div
+                  key={item.key}
+                  className="p-5 text-left"
+                  style={{ border: `1px solid ${nearBlack}11`, borderRadius: '2px', backgroundColor: offWhite }}
+                >
+                  <p className="text-xs uppercase tracking-widest mb-3" style={{ color: gray, opacity: 0.7 }}>Transfer Bank</p>
+                  <p className="text-sm font-medium mb-0.5" style={{ color: nearBlack }}>{item.bank}</p>
+                  <p className="text-base font-bold mb-2" style={{ color: nearBlack }}>{item.no}</p>
+                  <p className="text-xs mb-4" style={{ color: gray }}>a.n. {item.name}</p>
+                  <button
+                    type="button"
+                    onClick={() => handleCopy(item.no, item.key)}
+                    className="w-full text-sm tracking-widest uppercase transition-opacity hover:opacity-80 active:scale-95"
+                    style={{
+                      minHeight: '44px',
+                      borderRadius: '2px',
+                      letterSpacing: '0.12em',
+                      ...(copied === item.key
+                        ? { backgroundColor: nearBlack, color: offWhite }
+                        : { border: `1px solid ${nearBlack}44`, color: nearBlack, backgroundColor: 'transparent' }),
+                    }}
+                  >
+                    {copied === item.key ? '✓ Tersalin' : 'Salin Rekening'}
+                  </button>
+                </div>
+              ))}
+            </div>
+          </div>
+        </ScrollReveal>
+      </section>
+
+      <ThinRule color={nearBlack} />
+
       {/* ── RSVP ── */}
       <section className="py-24 px-8" style={{ backgroundColor: offWhite }}>
         <ScrollReveal>
@@ -449,6 +509,16 @@ export default function ModernMinimal({ invitation, guests, onRsvpSubmit, rsvpSt
       )}
 
       <ScrollToTop primaryColor={nearBlack} />
+
+      {/* Copy toast */}
+      {copied && (
+        <div
+          className="fixed bottom-20 left-1/2 z-50 px-5 py-3 text-sm shadow-xl pointer-events-none"
+          style={{ backgroundColor: nearBlack, color: offWhite, transform: 'translateX(-50%)', borderRadius: '2px', animation: 'toastSlideUp 0.3s ease-out forwards' }}
+        >
+          ✓ Nomor rekening disalin!
+        </div>
+      )}
     </div>
   );
 }

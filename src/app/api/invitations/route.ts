@@ -92,6 +92,7 @@ export async function POST(req: NextRequest) {
       'royal-purple':    '{"primary":"#6a1b9a","secondary":"#f3e5f5","accent":"#12005e"}',
       'islami-elegant':  '{"primary":"#c9a84c","secondary":"#0a1628","accent":"#e8d5a3"}',
       'modern-minimal':  '{"primary":"#2d2d2d","secondary":"#f8f8f8","accent":"#888888"}',
+      'mehnikah-floral': '{"primary":"#c9a97a","secondary":"#fdf8f3","accent":"#8b6f5a"}',
     };
     const defaultColors = TEMPLATE_COLORS[template.slug] || '{"primary":"#d4af37","secondary":"#fff8e7","accent":"#1a1a2e"}';
 
@@ -107,17 +108,23 @@ export async function POST(req: NextRequest) {
       db.prepare(`
         INSERT INTO invitations (
           id, user_id, slug, title, template_id, package_type,
-          partner_name, partner_name2, date_akad, time_akad,
-          location, address, maps_url, colors, font_family,
+          partner_name, partner_name2, parent_name, parent_name2,
+          date_akad, time_akad, date_resepsi, time_resepsi,
+          location, address, maps_url, quote, story,
+          gallery_photos, music_url, colors, font_family,
           layout_style, event_date, language
-        ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+        ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
       `).run(
         id, user.id, slug, body.title || 'Undangan Pernikahan',
         body.template_id, body.package_type || 'basic',
         body.partner_name || '', body.partner_name2 || '',
+        body.parent_name || null, body.parent_name2 || null,
         body.date_akad || null, body.time_akad || null,
+        body.date_resepsi || null, body.time_resepsi || null,
         body.location || '', body.address || '',
         body.maps_url || null,
+        body.quote || null, body.story || null,
+        body.gallery_photos || null, body.music_url || null,
         body.colors || defaultColors,
         body.font_family || 'serif',
         body.layout_style || 'classic',

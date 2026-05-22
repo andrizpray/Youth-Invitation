@@ -1,6 +1,6 @@
 'use client';
 
-import { useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import Countdown from './Countdown';
 import RsvpSection from './RsvpSection';
 import ScrollReveal from './ScrollReveal';
@@ -67,6 +67,19 @@ export default function IslamiElegant({ invitation, guests, onRsvpSubmit, rsvpSt
   }
 
   const [lightboxImg, setLightboxImg] = useState<string | null>(null);
+  const [copied, setCopied] = useState<string | null>(null);
+  const copyTimerRef = useRef<ReturnType<typeof setTimeout>>(undefined);
+
+  useEffect(() => () => clearTimeout(copyTimerRef.current), []);
+
+  const handleCopy = (text: string, key: string) => {
+    navigator.clipboard.writeText(text).then(() => {
+      setCopied(key);
+      clearTimeout(copyTimerRef.current);
+      copyTimerRef.current = setTimeout(() => setCopied(null), 2000);
+    });
+  };
+
   const targetDate = invitation.date_akad || invitation.date_resepsi;
 
   const gold = colors.primary || '#c9a84c';
@@ -383,6 +396,52 @@ export default function IslamiElegant({ invitation, guests, onRsvpSubmit, rsvpSt
         </section>
       )}
 
+      {/* ── Gift ── */}
+      <section
+        className="py-20 px-6 text-center"
+        style={{ background: `linear-gradient(180deg, #091525 0%, ${navy} 100%)` }}
+      >
+        <ScrollReveal>
+          <p className="text-xs uppercase tracking-[0.35em] mb-2" style={{ color: `${gold}99` }}>
+            Wedding Gift
+          </p>
+          <OrnamentDivider color={gold} />
+          <p className="text-sm mb-8 max-w-xs mx-auto leading-relaxed mt-4" style={{ color: `${cream}bb` }}>
+            Doa restu Anda adalah hadiah terbesar. Namun jika ingin memberi, Anda dapat mengirimkan melalui:
+          </p>
+          <div className="flex flex-col gap-4 max-w-xs mx-auto">
+            {[
+              { bank: 'Bank BCA', no: '1234567890', name: 'Andriz Prayoga', key: 'bca' },
+              { bank: 'Bank Mandiri', no: '0987654321', name: 'Siti Nurhaliza', key: 'mandiri' },
+            ].map((item) => (
+              <div
+                key={item.key}
+                className="p-5 rounded-2xl text-left"
+                style={{ border: `1px solid ${gold}33`, background: `${gold}0a`, boxShadow: `0 8px 32px ${gold}14` }}
+              >
+                <p className="text-xs uppercase tracking-widest mb-3" style={{ color: `${gold}88` }}>Transfer Bank</p>
+                <p className="text-sm font-semibold mb-0.5" style={{ color: cream }}>{item.bank}</p>
+                <p className="text-base font-bold mb-2" style={{ color: gold }}>{item.no}</p>
+                <p className="text-xs mb-4" style={{ color: `${cream}88` }}>a.n. {item.name}</p>
+                <button
+                  type="button"
+                  onClick={() => handleCopy(item.no, item.key)}
+                  className="w-full rounded-xl text-sm font-semibold transition-all active:scale-95"
+                  style={{
+                    minHeight: '44px',
+                    ...(copied === item.key
+                      ? { backgroundColor: gold, color: navy }
+                      : { border: `1.5px solid ${gold}88`, color: gold, backgroundColor: 'transparent' }),
+                  }}
+                >
+                  {copied === item.key ? '✓ Tersalin!' : 'Salin Nomor Rekening'}
+                </button>
+              </div>
+            ))}
+          </div>
+        </ScrollReveal>
+      </section>
+
       {/* ── RSVP ── */}
       <section
         className="py-20 px-6"
@@ -472,6 +531,16 @@ export default function IslamiElegant({ invitation, guests, onRsvpSubmit, rsvpSt
       )}
 
       <ScrollToTop primaryColor={gold} />
+
+      {/* Copy toast */}
+      {copied && (
+        <div
+          className="fixed bottom-20 left-1/2 z-50 px-5 py-3 rounded-full text-sm shadow-xl pointer-events-none"
+          style={{ backgroundColor: gold, color: navy, transform: 'translateX(-50%)', animation: 'toastSlideUp 0.3s ease-out forwards' }}
+        >
+          ✓ Nomor rekening disalin!
+        </div>
+      )}
     </div>
   );
 }

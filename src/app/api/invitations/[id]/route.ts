@@ -106,6 +106,7 @@ export async function PATCH(
         'royal-purple':    '{"primary":"#6a1b9a","secondary":"#f3e5f5","accent":"#12005e"}',
         'islami-elegant':  '{"primary":"#c9a84c","secondary":"#0a1628","accent":"#e8d5a3"}',
         'modern-minimal':  '{"primary":"#2d2d2d","secondary":"#f8f8f8","accent":"#888888"}',
+        'mehnikah-floral': '{"primary":"#c9a97a","secondary":"#fdf8f3","accent":"#8b6f5a"}',
       };
       if (tmpl?.slug && TEMPLATE_COLORS[tmpl.slug]) {
         body.colors = TEMPLATE_COLORS[tmpl.slug];
