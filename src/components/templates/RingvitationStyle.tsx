@@ -114,7 +114,6 @@ export default function RingvitationStyle({ invitation, guests, onRsvpSubmit, rs
   try { photos = JSON.parse(invitation.gallery_photos || '[]'); } catch { photos = []; }
 
   const [loading, setLoading] = useState(true);
-  const [opened, setOpened] = useState(false);
   const [lightboxImg, setLightboxImg] = useState<string | null>(null);
   const [copied, setCopied] = useState<string | null>(null);
   const [musicPlaying, setMusicPlaying] = useState(false);
@@ -127,12 +126,23 @@ export default function RingvitationStyle({ invitation, guests, onRsvpSubmit, rs
       const parsed = JSON.parse(invitation.story || '[]');
       if (Array.isArray(parsed) && parsed.length > 0) setStoryTimeline(parsed);
     } catch {}
-    // Loading page fade
     const t = setTimeout(() => setLoading(false), 1500);
     return () => clearTimeout(t);
   }, [invitation.story]);
 
   useEffect(() => () => clearTimeout(copyTimerRef.current), []);
+
+  useEffect(() => {
+    // Auto-play music on first interaction
+    const play = () => {
+      if (invitation.music_url && audioRef.current) {
+        audioRef.current.play().then(() => setMusicPlaying(true)).catch(() => {});
+      }
+      document.removeEventListener('click', play);
+    };
+    document.addEventListener('click', play, { once: true });
+    return () => document.removeEventListener('click', play);
+  }, [invitation.music_url]);
 
   const handleCopy = (text: string, key: string) => {
     navigator.clipboard.writeText(text).then(() => {
@@ -140,13 +150,6 @@ export default function RingvitationStyle({ invitation, guests, onRsvpSubmit, rs
       clearTimeout(copyTimerRef.current);
       copyTimerRef.current = setTimeout(() => setCopied(null), 2000);
     });
-  };
-
-  const handleOpen = () => {
-    setOpened(true);
-    if (invitation.music_url && audioRef.current) {
-      audioRef.current.play().then(() => setMusicPlaying(true)).catch(() => {});
-    }
   };
 
   const toggleMusic = () => {
@@ -181,55 +184,54 @@ export default function RingvitationStyle({ invitation, guests, onRsvpSubmit, rs
       {/* ===== CONTENT ===== */}
       <div className={`transition-all duration-1000 ${loading ? 'opacity-0' : 'opacity-100'}`}>
 
-        {/* ===== COVER OVERLAY (BUKA UNDANGAN) ===== */}
-        <div
-          className={`fixed inset-0 d-flex flex-column justify-content-center align-items-center text-center px-4 transition-all duration-700 ${opened ? 'opacity-0 pointer-events-none' : 'opacity-100'}`}
-          style={{ zIndex: 50, background: `linear-gradient(rgba(0,0,0,0.3), rgba(0,0,0,0.7))`, color: '#fff' }}
-        >
-          <p className="mb-3" style={{ fontFamily: STYLE_FONT_ESTHETIC, fontSize: '1.25rem', opacity: 0.8 }}>Undangan Pernikahan</p>
-          <h1 className="mb-1" style={{ fontFamily: STYLE_FONT_ESTHETIC, fontSize: '2.5rem' }}>
-            {invitation.partner_name} &amp; {invitation.partner_name2}
-          </h1>
-          {targetDate && <p className="mb-4" style={{ fontSize: '1.1rem', opacity: 0.8 }}>{fmtDate(targetDate)}</p>}
-          <button
-            onClick={handleOpen}
-            className="btn btn-sm rounded-pill px-4 py-2"
-            style={{ border: '1px solid #fff', color: '#fff', fontSize: '0.875rem' }}
-          >
-            <i className="fa-regular fa-envelope me-2"></i>Buka Undangan
-          </button>
-        </div>
+        {/* ===== HOME / COVER ===== */}
+        <section id="section-home" className="position-relative overflow-hidden text-center p-0 m-0" style={{ color: '#fff' }}>
+          <img
+            src={photos[0] || 'https://picsum.photos/400/800'}
+            alt="bg"
+            className="position-absolute top-50 start-50 translate-middle"
+            style={{ width: '100%', height: '100%', objectFit: 'cover', maskImage: 'linear-gradient(0.5turn, transparent, black 40%, black 60%, transparent)', opacity: 0.35 }}
+          />
+          <div className="position-relative py-5 px-3" style={{ background: `linear-gradient(180deg, rgba(0,0,0,0.3), rgba(0,0,0,0.8))` }}>
+            <p className="mb-3 pt-4" style={{ fontFamily: STYLE_FONT_ESTHETIC, fontSize: '2.25rem', fontWeight: 500 }}>Undangan Pernikahan</p>
+            <div className="mx-auto rounded-circle border border-3 border-light shadow my-4 overflow-hidden" style={{ width: '13rem', height: '13rem', maxWidth: '100%', maxHeight: '100%' }}>
+              {photos[1] || photos[0] ? (
+                <img src={photos[1] || photos[0]} alt="couple" className="w-100 h-100" style={{ objectFit: 'cover' }} />
+              ) : (
+                <div className="w-100 h-100 d-flex align-items-center justify-content-center" style={{ opacity: 0.4 }}>
+                  <svg width="64" height="64" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/></svg>
+                </div>
+              )}
+            </div>
+            <h1 className="mb-2" style={{ fontFamily: STYLE_FONT_ESTHETIC, fontSize: '2.5rem' }}>
+              {invitation.partner_name} &amp; {invitation.partner_name2}
+            </h1>
+            {targetDate && <p className="mb-3" style={{ fontSize: '1.25rem', opacity: 0.8 }}>{fmtDate(targetDate)}</p>}
+            {invitation.maps_url && (
+              <a href={invitation.maps_url} target="_blank" rel="noopener noreferrer"
+                className="btn btn-sm rounded-pill px-3 py-1 d-inline-block"
+                style={{ border: '1px solid rgba(255,255,255,0.5)', color: '#fff', fontSize: '0.825rem', textDecoration: 'none' }}
+              >
+                <svg width="14" height="14" viewBox="0 0 16 16" fill="currentColor" className="me-2 d-inline" style={{ verticalAlign: 'middle' }}>
+                  <path d="M3.5 0a.5.5 0 0 1 .5.5V1h8V.5a.5.5 0 0 1 1 0V1h1a2 2 0 0 1 2 2v11a2 2 0 0 1-2 2H2a2 2 0 0 1-2-2V3a2 2 0 0 1 2-2h1V.5a.5.5 0 0 1 .5-.5zM2 2a1 1 0 0 0-1 1v1h14V3a1 1 0 0 0-1-1H2zm13 3H1v9a1 1 0 0 0 1 1h12a1 1 0 0 0 1-1V5z"/>
+                </svg>
+                Save Google Calendar
+              </a>
+            )}
+            {/* Scroll mouse indicator */}
+            <div className="d-flex justify-content-center mt-4 mb-2">
+              <div className="border border-secondary border-2 rounded-5 px-2 py-1" style={{ opacity: 0.5 }}>
+                <div className="rounded-4" style={{ width: '0.5rem', height: '1rem', backgroundColor: '#fff', animation: 'scrollAnim 1.5s ease-in-out infinite' }}></div>
+              </div>
+            </div>
+            <p className="pb-4 m-0" style={{ fontSize: '0.825rem', opacity: 0.6, color: '#6c757d' }}>Scroll Down</p>
+          </div>
+        </section>
+
+        <WaveDivider color={colors.secondary} />
 
         {/* ===== MAIN CONTENT ===== */}
-        <div className={opened ? '' : 'd-none'}>
-
-          {/* HOME SECTION */}
-          <section id="section-home" className="position-relative overflow-hidden text-center" style={{ color: '#fff' }}>
-            <div className="position-relative py-5 px-3" style={{ background: `linear-gradient(135deg, ${colors.accent}, #000)` }}>
-              <p className="mb-2" style={{ fontFamily: STYLE_FONT_ESTHETIC, fontSize: '1.25rem', opacity: 0.8 }}>Undangan Pernikahan</p>
-              <ImgCircle src={photos[0]} alt="couple" borderColor={colors.primary} />
-              <h1 className="my-3" style={{ fontFamily: STYLE_FONT_ESTHETIC, fontSize: '2.5rem' }}>
-                {invitation.partner_name} &amp; {invitation.partner_name2}
-              </h1>
-              {targetDate && <p style={{ fontSize: '1.15rem', opacity: 0.8 }}>{fmtDate(targetDate)}</p>}
-              {invitation.maps_url && (
-                <a href={invitation.maps_url} target="_blank" rel="noopener noreferrer"
-                  className="btn btn-sm rounded-pill px-3 py-1 mt-2"
-                  style={{ border: '1px solid rgba(255,255,255,0.5)', color: '#fff', fontSize: '0.825rem' }}
-                >
-                  <i className="fa-regular fa-calendar-check me-2"></i>Save Google Calendar
-                </a>
-              )}
-              <div className="d-flex justify-content-center mt-4 mb-2">
-                <div className="border border-secondary border-2 rounded-5 px-2 py-1" style={{ opacity: 0.5 }}>
-                  <div className="rounded-4" style={{ width: '0.5rem', height: '1rem', backgroundColor: '#fff', animation: 'scrollAnim 1.5s ease-in-out infinite' }}></div>
-                </div>
-              </div>
-              <p className="mb-0" style={{ fontSize: '0.825rem', opacity: 0.6 }}>Scroll Down</p>
-            </div>
-          </section>
-
-          <WaveDivider color={colors.secondary} />
+        <div>
 
           {/* BRIDE SECTION */}
           <section id="section-bride" className="text-center py-4 px-3" style={{ backgroundColor: colors.secondary, color: colors.accent }}>
