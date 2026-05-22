@@ -8,6 +8,7 @@ import RomanticBlush from '@/components/templates/RomanticBlush';
 import IslamicGreen from '@/components/templates/IslamicGreen';
 import IslamiElegant from '@/components/templates/IslamiElegant';
 import ModernMinimal from '@/components/templates/ModernMinimal';
+import MehnikahFloral from '@/components/templates/MehnikahFloral';
 
 type RsvpStatus = 'idle' | 'submitting' | 'success' | 'error';
 
@@ -113,6 +114,9 @@ function TemplateRenderer({
   }
   if (templateSlug === 'modern-minimal') {
     return <ModernMinimal {...props} />;
+  }
+  if (templateSlug === 'mehnikah-floral') {
+    return <MehnikahFloral {...props} />;
   }
   // Default: classic-gold and everything else
   return <ClassicGold {...props} />;
