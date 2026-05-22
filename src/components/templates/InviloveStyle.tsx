@@ -4,6 +4,7 @@ import { useEffect, useRef, useState } from 'react';
 import Countdown from './Countdown';
 import RsvpSection from './RsvpSection';
 import ScrollReveal from './ScrollReveal';
+import ScrollToTop from './ScrollToTop';
 import { TemplateProps } from './types';
 
 export default function InviloveStyle({ invitation, guests, onRsvpSubmit, rsvpStatus, rsvpError }: TemplateProps) {
@@ -20,21 +21,20 @@ export default function InviloveStyle({ invitation, guests, onRsvpSubmit, rsvpSt
     photos = [];
   }
 
-  const storyTimeline = (() => {
-    try {
-      const parsed = JSON.parse(invitation.story || '[]');
-      if (Array.isArray(parsed) && parsed.length > 0) return parsed as { title: string; date: string; description: string }[];
-    } catch {}
-    return null;
-  })();
-
   const [opened, setOpened] = useState(false);
   const [lightboxImg, setLightboxImg] = useState<string | null>(null);
   const [copied, setCopied] = useState<string | null>(null);
   const [musicPlaying, setMusicPlaying] = useState(false);
   const copyTimerRef = useRef<ReturnType<typeof setTimeout>>(undefined);
   const audioRef = useRef<HTMLAudioElement>(null);
+  const [storyTimeline, setStoryTimeline] = useState<any[] | null>(null);
 
+  useEffect(() => {
+    try {
+      const parsed = JSON.parse(invitation.story || '[]');
+      if (Array.isArray(parsed) && parsed.length > 0) setStoryTimeline(parsed);
+    } catch {}
+  }, [invitation.story]);
   useEffect(() => () => clearTimeout(copyTimerRef.current), []);
 
   const handleCopy = (text: string, key: string) => {
@@ -45,13 +45,11 @@ export default function InviloveStyle({ invitation, guests, onRsvpSubmit, rsvpSt
     });
   };
 
-  const scrollTo = (id: string) => {
-    document.getElementById(id)?.scrollIntoView({ behavior: 'smooth' });
-  };
+  const scrollTo = (id: string) => document.getElementById(id)?.scrollIntoView({ behavior: 'smooth' });
 
   const handleOpen = () => {
     setOpened(true);
-    setTimeout(() => scrollTo('section-bismillah'), 400);
+    setTimeout(() => scrollTo('section-bismillah'), 500);
     if (invitation.music_url && audioRef.current) {
       audioRef.current.play().then(() => setMusicPlaying(true)).catch(() => {});
     }
@@ -64,58 +62,41 @@ export default function InviloveStyle({ invitation, guests, onRsvpSubmit, rsvpSt
   };
 
   const targetDate = invitation.date_akad || invitation.date_resepsi;
-  const formatDate = (d: string) => new Date(d).toLocaleDateString('id-ID', { weekday: 'long', day: 'numeric', month: 'long', year: 'numeric' });
-  const heroPhoto = photos[0];
+  const formatDate = (d: string) => new Date(d).toLocaleDateString('id-ID', {
+    weekday: 'long', day: 'numeric', month: 'long', year: 'numeric',
+  });
 
-  const navItems = [
-    { id: 'section-cover', icon: '🏠', label: 'Home' },
-    { id: 'section-couple', icon: '💑', label: 'Couple' },
-    { id: 'section-event', icon: '📅', label: 'Event' },
-    { id: 'section-gallery', icon: '📷', label: 'Gallery' },
-    { id: 'section-wishes', icon: '💬', label: 'Wishes' },
-  ];
-
-  /* Soft floral SVG decorations */
-  const FloralDivider = () => (
-    <svg width="120" height="24" viewBox="0 0 120 24" fill="none" className="mx-auto my-4" aria-hidden="true">
-      <line x1="0" y1="12" x2="40" y2="12" stroke={colors.primary} strokeWidth="0.8" strokeOpacity="0.5" />
-      <circle cx="60" cy="12" r="3" fill={colors.primary} fillOpacity="0.6" />
-      <circle cx="52" cy="12" r="1.5" fill={colors.primary} fillOpacity="0.4" />
-      <circle cx="68" cy="12" r="1.5" fill={colors.primary} fillOpacity="0.4" />
-      <line x1="80" y1="12" x2="120" y2="12" stroke={colors.primary} strokeWidth="0.8" strokeOpacity="0.5" />
-    </svg>
-  );
+  // === EXACT COLORS FROM invilove.id ===
+  const TAUPE = '#776b5d';         // rgb(119, 107, 93) - button bg, accent
+  const WARM_BEIGE = '#ebe3d5';    // rgb(235, 227, 213) - section bg
+  const DARK_BROWN = '#332c25';    // rgb(51, 44, 37) - dark text
+  const OFF_WHITE = '#ffffff';
+  const LIGHT_BEIGE = '#f3eeea';   // rgb(243, 238, 234)
 
   return (
-    <div style={{ fontFamily: '"Playfair Display", serif', color: colors.accent, backgroundColor: colors.secondary, paddingBottom: '80px' }}>
+    <div style={{ fontFamily: '"Lora", "Philosopher", serif', color: DARK_BROWN, backgroundColor: OFF_WHITE, paddingBottom: '80px' }}>
+      {invitation.music_url && <audio ref={audioRef} src={invitation.music_url} loop />}
 
-      {invitation.music_url && (
-        <audio ref={audioRef} src={invitation.music_url} loop />
-      )}
-
-      {/* === COVER OVERLAY === */}
+      {/* ===== COVER OVERLAY ===== */}
       <div
-        className={`fixed inset-0 z-50 flex flex-col items-center justify-center px-6 text-center overflow-hidden transition-all duration-700 ${opened ? 'opacity-0 pointer-events-none -translate-y-10' : 'opacity-100'}`}
-        style={{ background: `linear-gradient(160deg, ${colors.accent}f0 0%, ${colors.primary}cc 50%, ${colors.accent}ee 100%)` }}
+        className={`fixed inset-0 z-50 flex flex-col items-center justify-center px-6 text-center transition-all duration-700 ${opened ? 'opacity-0 pointer-events-none -translate-y-10' : 'opacity-100'}`}
+        style={{ background: `linear-gradient(174deg, rgba(0,0,0,0.12) 38%, #000 100%)` }}
       >
-        {/* Soft petal blobs */}
-        <div className="absolute -top-16 -left-16 w-56 h-56 rounded-full opacity-20" style={{ background: `radial-gradient(circle, ${colors.secondary}, transparent)` }} />
-        <div className="absolute -bottom-16 -right-16 w-64 h-64 rounded-full opacity-20" style={{ background: `radial-gradient(circle, ${colors.secondary}, transparent)` }} />
-        <div className="absolute top-1/3 -right-20 w-48 h-48 rounded-full opacity-10" style={{ background: `radial-gradient(circle, ${colors.secondary}, transparent)` }} />
-
         <div className="relative z-10 flex flex-col items-center">
-          <p className="text-white/60 text-xs uppercase tracking-[0.4em] mb-3 opacity-0 animate-[fadeInDown_0.8s_ease-out_0.1s_forwards]">The Wedding Of</p>
+          <p className="text-xs uppercase tracking-[0.5em] mb-8 opacity-0 animate-[fadeInDown_0.8s_ease-out_0.1s_forwards]" style={{ color: WARM_BEIGE, fontFamily: '"Philosopher", sans-serif' }}>
+            The Wedding Of
+          </p>
 
-          <h1 className="text-6xl md:text-7xl text-white mb-1 opacity-0 animate-[fadeInUp_0.8s_ease-out_0.2s_forwards]" style={{ fontFamily: '"Parisienne", cursive' }}>
+          <h1 className="text-5xl md:text-6xl text-white mb-1 opacity-0 animate-[fadeInUp_0.8s_ease-out_0.2s_forwards]" style={{ fontFamily: '"Parisienne", cursive', letterSpacing: '0.02em' }}>
             {invitation.partner_name}
           </h1>
-          <p className="text-white/60 text-2xl my-2 opacity-0 animate-[fadeInUp_0.8s_ease-out_0.3s_forwards]">❀ &amp; ❀</p>
-          <h1 className="text-6xl md:text-7xl text-white mb-6 opacity-0 animate-[fadeInUp_0.8s_ease-out_0.4s_forwards]" style={{ fontFamily: '"Parisienne", cursive' }}>
+          <p className="text-3xl my-3 opacity-0 animate-[fadeInUp_0.8s_ease-out_0.3s_forwards]" style={{ color: WARM_BEIGE, fontFamily: '"Parisienne", cursive' }}>&amp;</p>
+          <h1 className="text-5xl md:text-6xl text-white mb-6 opacity-0 animate-[fadeInUp_0.8s_ease-out_0.4s_forwards]" style={{ fontFamily: '"Parisienne", cursive', letterSpacing: '0.02em' }}>
             {invitation.partner_name2}
           </h1>
 
           {targetDate && (
-            <p className="text-white/60 text-xs tracking-widest mb-10 opacity-0 animate-[fadeInUp_0.8s_ease-out_0.5s_forwards]">
+            <p className="text-white/60 text-sm tracking-[0.3em] mb-14 uppercase opacity-0 animate-[fadeInUp_0.8s_ease-out_0.5s_forwards]" style={{ fontFamily: '"Philosopher", sans-serif' }}>
               {new Date(targetDate).toLocaleDateString('id-ID', { day: 'numeric', month: 'long', year: 'numeric' })}
             </p>
           )}
@@ -123,300 +104,218 @@ export default function InviloveStyle({ invitation, guests, onRsvpSubmit, rsvpSt
           <button
             type="button"
             onClick={handleOpen}
-            className="px-8 py-3 rounded-full text-sm font-semibold tracking-widest uppercase transition-all hover:scale-105 active:scale-95 shadow-md opacity-0 animate-[fadeInUp_0.8s_ease-out_0.6s_forwards]"
-            style={{ backgroundColor: 'white', color: colors.accent, minHeight: '48px' }}
+            className="px-8 py-2.5 text-xs font-semibold uppercase transition-all duration-300 hover:scale-105 active:scale-95 opacity-0 animate-[fadeInUp_0.8s_ease-out_0.6s_forwards]"
+            style={{
+              background: OFF_WHITE,
+              color: DARK_BROWN,
+              border: 'none',
+              borderRadius: '14px',
+              padding: '10px 30px',
+              fontFamily: '"Philosopher", sans-serif',
+              letterSpacing: '0.5px',
+            }}
           >
-            ✉ Buka Undangan
+            BUKA UNDANGAN
           </button>
         </div>
       </div>
 
-      {/* === SECTION 1: COVER === */}
-      <section id="section-cover" className="min-h-screen flex flex-col items-center justify-center px-6 py-20 text-center relative overflow-hidden"
-        style={{ background: `linear-gradient(160deg, ${colors.accent}f0 0%, ${colors.primary}cc 50%, ${colors.accent}ee 100%)` }}>
-        <div className="absolute -top-20 -left-20 w-64 h-64 rounded-full opacity-15" style={{ background: `radial-gradient(circle, white, transparent)` }} />
-        <div className="absolute -bottom-20 -right-20 w-72 h-72 rounded-full opacity-10" style={{ background: `radial-gradient(circle, white, transparent)` }} />
+      {/* MAIN */}
+      <div className={opened ? '' : 'hidden'}>
 
-        <div className="relative z-10">
-          <p className="text-white/60 text-xs uppercase tracking-[0.4em] mb-4">The Wedding Of</p>
-          <h1 className="text-5xl md:text-6xl text-white mb-1" style={{ fontFamily: '"Parisienne", cursive' }}>{invitation.partner_name}</h1>
-          <p className="text-white/70 text-2xl my-3">❀ &amp; ❀</p>
-          <h1 className="text-5xl md:text-6xl text-white mb-8" style={{ fontFamily: '"Parisienne", cursive' }}>{invitation.partner_name2}</h1>
-          {targetDate && (
-            <p className="text-white/60 text-xs tracking-widest">
-              {new Date(targetDate).toLocaleDateString('id-ID', { day: 'numeric', month: 'long', year: 'numeric' })}
+        {/* Bismillah */}
+        <section id="section-bismillah" className="min-h-screen flex flex-col items-center justify-center px-6 py-24 text-center" style={{ background: DARK_BROWN }}>
+          <ScrollReveal className="flex flex-col items-center max-w-md">
+            <p className="text-white/60 text-lg mb-2" style={{ fontFamily: '"Abyssinica SIL", serif' }}>بِسْمِ اللَّهِ الرَّحْمَنِ الرَّحِيم</p>
+            <p className="text-white/40 text-xs uppercase tracking-[0.4em] mb-10">Bismillahirrahmanirrahim</p>
+            <p className="text-white/70 text-sm leading-relaxed mb-2 italic">
+              "Dan di antara tanda-tanda (kebesaran)-Nya ialah Dia menciptakan pasangan-pasangan untukmu dari jenismu sendiri, agar kamu cenderung dan merasa tenteram kepadanya, dan Dia menjadikan di antaramu rasa kasih dan sayang."
             </p>
-          )}
-        </div>
-      </section>
+            <p className="text-white/40 text-xs mb-10">(QS. Ar-Rum : 21)</p>
+            {targetDate && <Countdown targetDate={targetDate} primaryColor={WARM_BEIGE} accentColor="#ffffff66" />}
+          </ScrollReveal>
+        </section>
 
-      {/* === SECTION 2: BISMILLAH + AYAT + COUNTDOWN === */}
-      <section id="section-bismillah" className="py-20 px-6 text-center" style={{ backgroundColor: colors.secondary }}>
-        <ScrollReveal>
-          <p className="text-xs uppercase tracking-[0.35em] mb-3" style={{ color: colors.primary }}>Bismillahirrahmanirrahim</p>
-          <FloralDivider />
-          <p className="italic max-w-sm mx-auto leading-relaxed text-sm opacity-80 mb-3">
-            &ldquo;Dan di antara tanda-tanda kekuasaan-Nya ialah Dia menciptakan untukmu pasangan hidup dari jenismu sendiri, supaya kamu cenderung dan merasa tenteram kepadanya.&rdquo;
-          </p>
-          <p className="text-xs tracking-widest" style={{ color: colors.primary }}>— QS. Ar-Rum: 21</p>
-          <FloralDivider />
-          {targetDate && <Countdown targetDate={targetDate} primaryColor={colors.primary} accentColor={colors.accent} />}
-        </ScrollReveal>
-      </section>
-
-      {/* === SECTION 3: BRIDE & GROOM === */}
-      <section id="section-couple" className="py-20 px-6 text-center" style={{ backgroundColor: colors.primary + '15' }}>
-        <ScrollReveal>
-          <p className="text-xs uppercase tracking-[0.35em] mb-2" style={{ color: colors.primary }}>Mempelai</p>
-          <FloralDivider />
-
-          <div className="grid grid-cols-1 max-sm:grid-cols-1 sm:grid-cols-2 gap-6 max-w-2xl mx-auto mt-8">
-            <div className="p-8 rounded-3xl text-center" style={{ backgroundColor: colors.secondary, border: `1px solid ${colors.primary}33`, boxShadow: `0 8px 32px ${colors.primary}1a` }}>
-              {heroPhoto && (
-                <div className="w-32 h-32 mx-auto mb-4 rounded-full overflow-hidden border-4" style={{ borderColor: colors.primary + '88' }}>
-                  <img src={heroPhoto} alt={invitation.partner_name} className="w-full h-full object-cover" />
-                </div>
-              )}
-              <p className="text-xs tracking-widest opacity-50 mb-2">MEMPELAI PRIA</p>
-              <p className="text-3xl mb-3" style={{ fontFamily: '"Parisienne", cursive', color: colors.primary }}>{invitation.partner_name}</p>
-              {invitation.parent_name && (
-                <>
-                  <p className="text-xs opacity-60">Putra dari</p>
-                  <p className="text-sm mt-1">{invitation.parent_name}</p>
-                </>
-              )}
-            </div>
-
-            <div className="p-8 rounded-3xl text-center" style={{ backgroundColor: colors.secondary, border: `1px solid ${colors.primary}33`, boxShadow: `0 8px 32px ${colors.primary}1a` }}>
-              {photos[1] && (
-                <div className="w-32 h-32 mx-auto mb-4 rounded-full overflow-hidden border-4" style={{ borderColor: colors.primary + '88' }}>
-                  <img src={photos[1]} alt={invitation.partner_name2} className="w-full h-full object-cover" />
-                </div>
-              )}
-              <p className="text-xs tracking-widest opacity-50 mb-2">MEMPELAI WANITA</p>
-              <p className="text-3xl mb-3" style={{ fontFamily: '"Parisienne", cursive', color: colors.primary }}>{invitation.partner_name2}</p>
-              {invitation.parent_name2 && (
-                <>
-                  <p className="text-xs opacity-60">Putri dari</p>
-                  <p className="text-sm mt-1">{invitation.parent_name2}</p>
-                </>
-              )}
-            </div>
-          </div>
-        </ScrollReveal>
-      </section>
-
-      {/* === SECTION 4: EVENT DETAILS === */}
-      <section id="section-event" className="py-20 px-6 text-center" style={{ backgroundColor: colors.secondary }}>
-        <ScrollReveal>
-          <p className="text-xs uppercase tracking-[0.35em] mb-2" style={{ color: colors.primary }}>Save The Date</p>
-          <FloralDivider />
-
-          <div className="grid grid-cols-1 max-sm:grid-cols-1 sm:grid-cols-2 gap-6 max-w-2xl mx-auto mt-8">
-            {(invitation.date_akad || invitation.time_akad) && (
-              <div className="p-8 rounded-3xl" style={{ backgroundColor: colors.primary + '12', border: `1px solid ${colors.primary}33` }}>
-                <p className="text-2xl mb-3" style={{ fontFamily: '"Parisienne", cursive', color: colors.primary }}>Akad Nikah</p>
-                <div className="w-10 h-px mx-auto my-3" style={{ backgroundColor: colors.primary + '66' }} />
-                {invitation.date_akad && <p className="text-sm font-semibold mb-1">{formatDate(invitation.date_akad)}</p>}
-                {invitation.time_akad && <p className="text-sm opacity-70 mb-3">{invitation.time_akad} WIB</p>}
-                {invitation.location && <p className="text-xs opacity-60 leading-relaxed mb-4">{invitation.location}</p>}
-                {invitation.maps_url && (
-                  <a href={invitation.maps_url} target="_blank" rel="noopener noreferrer"
-                    className="inline-flex items-center gap-2 px-4 py-2 rounded-full text-xs font-semibold text-white"
-                    style={{ backgroundColor: colors.primary, minHeight: '40px' }}>
-                    📍 Lihat Lokasi
-                  </a>
-                )}
+        {/* Bride & Groom */}
+        {(invitation.parent_name || invitation.parent_name2) && (
+          <section id="section-couple" className="min-h-screen flex flex-col items-center justify-center px-6 py-24 text-center" style={{ background: WARM_BEIGE }}>
+            <ScrollReveal>
+              <p className="text-xs uppercase tracking-[0.4em] mb-2" style={{ color: TAUPE, fontFamily: '"Philosopher", sans-serif' }}>Mempelai</p>
+              <div className="flex flex-col sm:flex-row gap-6 max-w-xl mx-auto">
+                {[
+                  { name: invitation.partner_name, parent: invitation.parent_name, photo: photos[0] },
+                  { name: invitation.partner_name2, parent: invitation.parent_name2, photo: photos[1] || photos[0] },
+                ].map((p, i) => p.parent && (
+                  <div key={i} className="flex-1 p-6 rounded-3xl text-center" style={{ backgroundColor: OFF_WHITE }}>
+                    <div className="w-20 h-20 mx-auto mb-3 rounded-full overflow-hidden" style={{ border: `2px solid ${TAUPE}44` }}>
+                      {p.photo ? <img src={p.photo} alt={p.name} className="w-full h-full object-cover" />
+                      : <div className="w-full h-full flex items-center justify-center" style={{ backgroundColor: `${TAUPE}15`, color: TAUPE }}>
+                          <svg width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/></svg>
+                        </div>}
+                    </div>
+                    <p className="text-lg mb-1" style={{ fontFamily: '"Parisienne", cursive', color: TAUPE }}>{p.name}</p>
+                    <p className="text-xs opacity-60" style={{ fontFamily: '"Lora", serif' }}>Putra{i === 1 ? 'ri' : ''} dari {p.parent}</p>
+                  </div>
+                ))}
               </div>
-            )}
+            </ScrollReveal>
+          </section>
+        )}
 
-            {(invitation.date_resepsi || invitation.time_resepsi) && (
-              <div className="p-8 rounded-3xl" style={{ backgroundColor: colors.primary + '12', border: `1px solid ${colors.primary}33` }}>
-                <p className="text-2xl mb-3" style={{ fontFamily: '"Parisienne", cursive', color: colors.primary }}>Resepsi</p>
-                <div className="w-10 h-px mx-auto my-3" style={{ backgroundColor: colors.primary + '66' }} />
-                {invitation.date_resepsi && <p className="text-sm font-semibold mb-1">{formatDate(invitation.date_resepsi)}</p>}
-                {invitation.time_resepsi && <p className="text-sm opacity-70 mb-3">{invitation.time_resepsi} WIB</p>}
-                {invitation.location && <p className="text-xs opacity-60 leading-relaxed mb-4">{invitation.location}</p>}
-                {invitation.maps_url && (
-                  <a href={invitation.maps_url} target="_blank" rel="noopener noreferrer"
-                    className="inline-flex items-center gap-2 px-4 py-2 rounded-full text-xs font-semibold text-white"
-                    style={{ backgroundColor: colors.primary, minHeight: '40px' }}>
-                    📍 Lihat Lokasi
-                  </a>
-                )}
-              </div>
-            )}
-          </div>
-        </ScrollReveal>
-      </section>
-
-      {/* === SECTION 5: GALLERY === */}
-      {photos.length > 0 && (
-        <section id="section-gallery" className="py-20 px-6" style={{ backgroundColor: colors.primary + '15' }}>
+        {/* Event */}
+        <section id="section-event" className="min-h-screen flex flex-col items-center justify-center px-6 py-24 text-center" style={{ background: OFF_WHITE }}>
           <ScrollReveal>
-            <p className="text-xs uppercase tracking-[0.35em] text-center mb-2" style={{ color: colors.primary }}>Wedding Gallery</p>
-            <FloralDivider />
-            <div className="grid grid-cols-2 max-sm:grid-cols-2 sm:grid-cols-3 gap-3 max-w-2xl mx-auto">
-              {photos.map((url, i) => (
-                <button key={i} type="button" onClick={() => setLightboxImg(url)}
-                  className="aspect-square rounded-2xl overflow-hidden cursor-zoom-in block"
-                  style={{ border: `1px solid ${colors.primary}33` }}
-                  aria-label={`Lihat foto ${i + 1}`}>
-                  <img src={url} alt={`Foto ${i + 1}`} className="w-full h-full object-cover hover:scale-110 transition-transform duration-500" loading="lazy" />
-                </button>
+            <p className="text-xs uppercase tracking-[0.4em] mb-2" style={{ color: TAUPE, fontFamily: '"Philosopher", sans-serif' }}>Acara Pernikahan</p>
+            <div className="flex flex-col sm:flex-row gap-6 max-w-xl mx-auto">
+              {invitation.date_akad && (
+                <div className="flex-1 p-6 rounded-3xl text-left" style={{ backgroundColor: LIGHT_BEIGE }}>
+                  <p className="text-xs uppercase tracking-[0.3em] mb-1" style={{ color: TAUPE, fontFamily: '"Philosopher", sans-serif' }}>Akad Nikah</p>
+                  <p className="text-sm font-semibold mb-1">{formatDate(invitation.date_akad)}</p>
+                  {invitation.time_akad && <p className="text-sm opacity-60 mb-1">Pukul {invitation.time_akad} WIB</p>}
+                  {invitation.location && <p className="text-sm opacity-60">{invitation.location}</p>}
+                  {invitation.maps_url && (
+                    <a href={invitation.maps_url} target="_blank" rel="noopener noreferrer"
+                      className="inline-block mt-4 px-5 py-2 text-xs uppercase tracking-[0.25em] transition-all hover:opacity-80"
+                      style={{ background: TAUPE, color: OFF_WHITE, borderRadius: '6px', fontFamily: '"Philosopher", sans-serif', letterSpacing: '2.7px' }}
+                    >
+                      BUKA MAPS
+                    </a>
+                  )}
+                </div>
+              )}
+              {invitation.date_resepsi && (
+                <div className="flex-1 p-6 rounded-3xl text-left" style={{ backgroundColor: LIGHT_BEIGE }}>
+                  <p className="text-xs uppercase tracking-[0.3em] mb-1" style={{ color: TAUPE, fontFamily: '"Philosopher", sans-serif' }}>Resepsi</p>
+                  <p className="text-sm font-semibold mb-1">{formatDate(invitation.date_resepsi)}</p>
+                  {invitation.time_resepsi && <p className="text-sm opacity-60 mb-1">Pukul {invitation.time_resepsi} WIB</p>}
+                  {invitation.location && <p className="text-sm opacity-60">{invitation.location}</p>}
+                  {invitation.maps_url && (
+                    <a href={invitation.maps_url} target="_blank" rel="noopener noreferrer"
+                      className="inline-block mt-4 px-5 py-2 text-xs uppercase tracking-[0.25em] transition-all hover:opacity-80"
+                      style={{ background: TAUPE, color: OFF_WHITE, borderRadius: '6px', fontFamily: '"Philosopher", sans-serif', letterSpacing: '2.7px' }}
+                    >
+                      BUKA MAPS
+                    </a>
+                  )}
+                </div>
+              )}
+            </div>
+          </ScrollReveal>
+        </section>
+
+        {/* Gallery */}
+        {photos.length > 0 && (
+          <section id="section-gallery" className="min-h-screen flex flex-col items-center justify-center px-6 py-24 text-center" style={{ background: WARM_BEIGE }}>
+            <ScrollReveal>
+              <p className="text-xs uppercase tracking-[0.4em] mb-2" style={{ color: TAUPE, fontFamily: '"Philosopher", sans-serif' }}>Wedding Gallery</p>
+            </ScrollReveal>
+            <div className="grid grid-cols-2 max-sm:grid-cols-2 sm:grid-cols-3 gap-3 max-w-3xl mx-auto w-full px-4">
+              {photos.map((photo, idx) => (
+                <ScrollReveal key={idx}>
+                  <div className="aspect-[3/4] overflow-hidden cursor-pointer group rounded-3xl" onClick={() => setLightboxImg(photo)}>
+                    <img src={photo} alt={`Gallery ${idx + 1}`} className="w-full h-full object-cover transition-transform duration-500 group-hover:scale-110" />
+                  </div>
+                </ScrollReveal>
               ))}
             </div>
-          </ScrollReveal>
-        </section>
-      )}
+          </section>
+        )}
 
-      {/* === SECTION 6: LOVE STORY === */}
-      {(storyTimeline || invitation.story) && (
-        <section className="py-20 px-6 text-center" style={{ backgroundColor: colors.secondary }}>
-          <ScrollReveal>
-            <p className="text-xs uppercase tracking-[0.35em] mb-2" style={{ color: colors.primary }}>Our Love Story</p>
-            <FloralDivider />
-
-            {storyTimeline ? (
-              <div className="max-w-md mx-auto mt-6">
-                {storyTimeline.map((item, idx) => (
-                  <div key={idx} className="flex gap-4 mb-8 last:mb-0">
+        {/* Love Story */}
+        {invitation.story && (
+          <section className="min-h-screen flex flex-col items-center justify-center px-6 py-24 text-center" style={{ background: OFF_WHITE }}>
+            <ScrollReveal>
+              <p className="text-xs uppercase tracking-[0.4em] mb-2" style={{ color: TAUPE, fontFamily: '"Philosopher", sans-serif' }}>Love Story</p>
+            </ScrollReveal>
+            <div className="max-w-lg mx-auto w-full px-4 text-left">
+              {storyTimeline ? storyTimeline.map((item, idx) => (
+                <ScrollReveal key={idx}>
+                  <div className="flex gap-5 mb-8">
                     <div className="flex flex-col items-center">
-                      <div className="w-8 h-8 rounded-full flex items-center justify-center text-white text-xs font-bold flex-shrink-0"
-                        style={{ backgroundColor: colors.primary }}>
-                        {idx + 1}
-                      </div>
-                      {idx < storyTimeline.length - 1 && (
-                        <div className="flex-1 w-px mt-2" style={{ backgroundColor: colors.primary + '44', minHeight: '32px' }} />
-                      )}
+                      <div className="w-3 h-3 rounded-full flex-shrink-0" style={{ backgroundColor: TAUPE }} />
+                      {idx < storyTimeline.length - 1 && <div className="w-px flex-1 mt-1" style={{ backgroundColor: `${TAUPE}33` }} />}
                     </div>
-                    <div className="pt-1 pb-4 text-left flex-1">
-                      <p className="text-xs uppercase tracking-widest mb-1" style={{ color: colors.primary }}>{item.title}</p>
-                      {item.date && <p className="text-xs opacity-50 mb-2">{item.date}</p>}
-                      <p className="text-sm italic opacity-75 leading-relaxed">{item.description}</p>
+                    <div className="flex-1 pb-4">
+                      <p className="text-xs opacity-60 mb-1">{item.date || ''}</p>
+                      <p className="text-base font-semibold mb-1" style={{ fontFamily: '"Parisienne", cursive', color: TAUPE }}>{item.title || ''}</p>
+                      <p className="text-sm opacity-70 leading-relaxed">{item.description || ''}</p>
                     </div>
                   </div>
-                ))}
-              </div>
-            ) : (
-              <div className="max-w-md mx-auto space-y-8 mt-6">
-                {['The Beginning', 'Becoming One', 'The Sacred Promise'].map((label, idx) => (
-                  <div key={label}>
-                    <p className="text-xs uppercase tracking-widest mb-2" style={{ color: colors.primary }}>{label}</p>
-                    <p className="text-sm italic opacity-75 leading-relaxed">
-                      {idx === 0 && invitation.story}
-                      {idx === 1 && 'Perjalanan kami berlanjut, saling memahami dan tumbuh bersama dalam cinta yang tulus.'}
-                      {idx === 2 && 'Dan kini, kami siap untuk mengikat janji suci di hadapan Allah SWT dan orang-orang tercinta.'}
-                    </p>
-                    {idx < 2 && <p className="text-xl mt-6" style={{ color: colors.primary }}>❀</p>}
-                  </div>
-                ))}
-              </div>
-            )}
-          </ScrollReveal>
-        </section>
-      )}
+                </ScrollReveal>
+              )) : <ScrollReveal><p className="text-sm opacity-70 leading-relaxed italic">{invitation.story}</p></ScrollReveal>}
+            </div>
+          </section>
+        )}
 
-      {/* === SECTION 7: WEDDING GIFT === */}
-      <section className="py-20 px-6 text-center" style={{ backgroundColor: colors.primary + '15' }}>
-        <ScrollReveal>
-          <p className="text-xs uppercase tracking-[0.35em] mb-2" style={{ color: colors.primary }}>Wedding Gift</p>
-          <FloralDivider />
-          <p className="text-sm opacity-75 max-w-xs mx-auto leading-relaxed mb-8">
-            Doa restu Anda adalah hadiah terbesar. Namun jika ingin memberi, dapat melalui:
-          </p>
-          <div className="flex flex-col gap-4 max-w-sm mx-auto">
-            {[
-              { bank: 'Bank BCA', no: '1234567890', name: invitation.partner_name, key: 'bca' },
-              { bank: 'Bank Mandiri', no: '0987654321', name: invitation.partner_name2, key: 'mandiri' },
-            ].map((item) => (
-              <div key={item.key} className="p-5 rounded-3xl text-left" style={{ backgroundColor: colors.secondary, border: `1px solid ${colors.primary}33` }}>
-                <p className="text-xs uppercase tracking-widest mb-2" style={{ color: colors.primary }}>{item.bank}</p>
-                <p className="text-xl font-bold mb-1" style={{ color: colors.accent }}>{item.no}</p>
-                <p className="text-xs mb-4 opacity-60">a.n. {item.name}</p>
-                <button type="button" onClick={() => handleCopy(item.no, item.key)}
-                  className="w-full rounded-2xl text-sm font-semibold transition-all active:scale-95"
-                  style={{ minHeight: '44px', ...(copied === item.key ? { backgroundColor: colors.primary, color: '#fff' } : { border: `1.5px solid ${colors.primary}`, color: colors.primary, backgroundColor: 'transparent' }) }}>
-                  {copied === item.key ? '✓ Tersalin!' : 'Copy Rekening'}
-                </button>
-              </div>
+        {/* Gift */}
+        <section className="py-24 px-6 text-center" style={{ background: WARM_BEIGE }}>
+          <ScrollReveal>
+            <p className="text-xs uppercase tracking-[0.4em] mb-2" style={{ color: TAUPE, fontFamily: '"Philosopher", sans-serif' }}>Wedding Gift</p>
+            <p className="text-sm opacity-60 mb-10 max-w-xs mx-auto">Doa restu Anda adalah hadiah. Jika ingin memberi tanda kasih:</p>
+          </ScrollReveal>
+          <div className="flex flex-col sm:flex-row gap-6 max-w-lg mx-auto px-4">
+            {[{ name: 'BCA', acc: '123 456 7890' }, { name: 'Mandiri', acc: '987 654 3210' }].map((b) => (
+              <ScrollReveal key={b.name}>
+                <div className="flex-1 p-6 rounded-3xl text-left" style={{ background: OFF_WHITE }}>
+                  <p className="text-sm font-semibold mb-1" style={{ color: TAUPE }}>{b.name}</p>
+                  <p className="text-xs opacity-60 mb-1">a.n. {invitation.partner_name} &amp; {invitation.partner_name2}</p>
+                  <p className="text-lg tracking-wider">{b.acc}</p>
+                  <button type="button" onClick={() => handleCopy(b.acc.replace(/\s/g, ''), b.name.toLowerCase())}
+                    className="mt-3 px-4 py-1.5 text-xs transition-all hover:opacity-80" style={{ background: TAUPE, color: OFF_WHITE, border: 'none', borderRadius: '6px', fontFamily: '"Lora", serif' }}>
+                    {copied === b.name.toLowerCase() ? '✓ Tersalin' : 'Copy'}
+                  </button>
+                </div>
+              </ScrollReveal>
             ))}
           </div>
-        </ScrollReveal>
-      </section>
+        </section>
 
-      {/* === SECTION 8: WISHES / RSVP === */}
-      <section id="section-wishes" className="py-20 px-6" style={{ backgroundColor: colors.secondary }}>
-        <ScrollReveal>
-          <p className="text-xs uppercase tracking-[0.35em] text-center mb-2" style={{ color: colors.primary }}>Wishes &amp; RSVP</p>
-          <FloralDivider />
+        {/* Wishes */}
+        <section id="section-wishes" className="py-24 px-6 text-center" style={{ background: OFF_WHITE }}>
+          <ScrollReveal>
+            <p className="text-xs uppercase tracking-[0.4em] mb-2" style={{ color: TAUPE, fontFamily: '"Philosopher", sans-serif' }}>R.S.V.P</p>
+          </ScrollReveal>
           <RsvpSection guests={guests} onSubmit={onRsvpSubmit} rsvpStatus={rsvpStatus} rsvpError={rsvpError}
-            primaryColor={colors.primary} accentColor={colors.accent} bgColor={colors.secondary} />
-        </ScrollReveal>
-      </section>
+            primaryColor={TAUPE} accentColor={DARK_BROWN} bgColor={WARM_BEIGE} />
+        </section>
 
-      {/* === FOOTER === */}
-      <footer className="py-16 px-6 text-center" style={{ background: `linear-gradient(160deg, ${colors.accent}f0 0%, ${colors.primary}cc 100%)` }}>
-        <ScrollReveal>
-          <p className="text-white/60 text-xs uppercase tracking-widest mb-4">Terima Kasih</p>
-          <p className="text-white/80 text-sm max-w-xs mx-auto leading-relaxed mb-6">Terima kasih atas doa dan restunya</p>
-          <p className="text-5xl text-white" style={{ fontFamily: '"Parisienne", cursive' }}>
+        {/* Footer */}
+        <footer className="py-16 px-6 text-center" style={{ background: `linear-gradient(rgba(0,0,0,0) 0%, ${TAUPE} 63%)` }}>
+          <p className="text-white/70 text-sm mb-6 max-w-xs mx-auto leading-relaxed">Merupakan kebahagiaan bagi kami jika Anda berkenan hadir.</p>
+          <p className="text-white/40 text-xs uppercase tracking-[0.3em] mb-3">The Wedding of</p>
+          <p className="text-2xl text-white mb-2" style={{ fontFamily: '"Parisienne", cursive', color: WARM_BEIGE }}>
             {invitation.partner_name} &amp; {invitation.partner_name2}
           </p>
-          <p className="text-white/40 text-xs mt-8">© Made with Love</p>
-        </ScrollReveal>
-      </footer>
+          <p className="text-white/30 text-xs mt-8">© 2025 — Made with Love</p>
+        </footer>
 
-      {/* === BOTTOM NAV === */}
-      {opened && (
-        <nav className="fixed bottom-0 left-0 right-0 z-40 flex justify-around items-center py-3 backdrop-blur-md"
-          style={{ backgroundColor: colors.secondary + 'ee', borderTop: `1px solid ${colors.primary}33` }}>
-          {navItems.map((item) => (
-            <button key={item.id} type="button" onClick={() => scrollTo(item.id)}
-              className="flex flex-col items-center justify-center w-14 h-14 rounded-full transition-all hover:scale-110 active:scale-95"
-              aria-label={item.label}>
-              <span className="text-2xl">{item.icon}</span>
-            </button>
-          ))}
+        {invitation.music_url && (
+          <button type="button" onClick={toggleMusic}
+            className="fixed bottom-20 right-4 z-40 w-12 h-12 rounded-full flex items-center justify-center shadow-lg transition-all hover:scale-110"
+            style={{ background: TAUPE, color: OFF_WHITE }}>
+            {musicPlaying ? '🔊' : '🔇'}
+          </button>
+        )}
+
+        <nav className="fixed bottom-0 left-0 right-0 z-40" style={{ background: `${TAUPE}ee`, backdropFilter: 'blur(8px)' }}>
+          <div className="flex justify-around items-center py-2 max-w-lg mx-auto">
+            {[{ id: 'section-bismillah', icon: '⌂' }, { id: 'section-couple', icon: '♡' }, { id: 'section-event', icon: '◷' }, { id: 'section-gallery', icon: '◱' }, { id: 'section-wishes', icon: '✉' }].map((item) => (
+              <button key={item.id} type="button" onClick={() => scrollTo(item.id)}
+                className="flex flex-col items-center gap-0.5 px-3 py-1 transition-all hover:opacity-80">
+                <span className="text-lg text-white/80">{item.icon}</span>
+                <span className="text-[10px] uppercase tracking-[0.1em] text-white/60">{item.id.replace('section-', '')}</span>
+              </button>
+            ))}
+          </div>
         </nav>
-      )}
 
-      {/* Music Button */}
-      {invitation.music_url && opened && (
-        <button type="button" onClick={toggleMusic}
-          className="fixed bottom-24 right-4 z-40 w-12 h-12 rounded-full flex items-center justify-center shadow-lg transition-all hover:scale-110 active:scale-95"
-          style={{ backgroundColor: colors.primary, color: '#fff' }}
-          aria-label={musicPlaying ? 'Pause music' : 'Play music'}>
-          <span className={musicPlaying ? 'animate-spin-slow' : ''}>{musicPlaying ? '⏸' : '🎵'}</span>
-        </button>
-      )}
-
-      {/* Lightbox */}
-      {lightboxImg && (
-        <div className="fixed inset-0 z-[60] flex items-center justify-center p-4"
-          style={{ backgroundColor: 'rgba(0,0,0,0.92)' }}
-          onClick={() => setLightboxImg(null)} role="dialog" aria-modal="true">
-          <img src={lightboxImg} alt="Foto" className="max-w-full max-h-full object-contain rounded-2xl"
-            onClick={(e) => e.stopPropagation()} />
-          <button type="button" className="absolute top-4 right-4 w-10 h-10 flex items-center justify-center rounded-full text-white text-2xl"
-            style={{ backgroundColor: 'rgba(255,255,255,0.2)' }} onClick={() => setLightboxImg(null)} aria-label="Tutup">×</button>
-        </div>
-      )}
-
-      {copied && (
-        <div className="fixed bottom-40 left-1/2 z-[60] px-5 py-3 rounded-full text-sm text-white shadow-xl pointer-events-none"
-          style={{ backgroundColor: colors.accent, transform: 'translateX(-50%)' }}>
-          ✓ Nomor rekening disalin!
-        </div>
-      )}
-
-      <style>{`
-        @import url('https://fonts.googleapis.com/css2?family=Parisienne&display=swap');
-        @keyframes fadeInUp { from { opacity: 0; transform: translateY(20px); } to { opacity: 1; transform: translateY(0); } }
-        @keyframes fadeInDown { from { opacity: 0; transform: translateY(-20px); } to { opacity: 1; transform: translateY(0); } }
-        .animate-spin-slow { animation: spin 3s linear infinite; }
-        @keyframes spin { to { transform: rotate(360deg); } }
-      `}</style>
+        {lightboxImg && (
+          <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/90 p-6 cursor-pointer" onClick={() => setLightboxImg(null)}>
+            <img src={lightboxImg} alt="Gallery" className="max-w-full max-h-full object-contain" />
+          </div>
+        )}
+        <ScrollToTop primaryColor={TAUPE} />
+      </div>
     </div>
   );
 }
