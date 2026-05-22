@@ -15,6 +15,10 @@ const templates = [
   { name: 'Islami Elegant', slug: 'islami-elegant', description: 'Tema islami elegan dengan latar navy gelap dan aksen emas', category: 'islami', colors: '{"primary":"#c9a84c","secondary":"#0a1628","accent":"#e8d5a3"}' },
   { name: 'Modern Minimal', slug: 'modern-minimal', description: 'Desain modern minimalis bersih dengan tipografi ringan', category: 'modern', colors: '{"primary":"#2d2d2d","secondary":"#f8f8f8","accent":"#888888"}' },
   { name: 'Mehnikah Floral', slug: 'mehnikah-floral', description: 'Tema rose gold floral yang elegan dan hangat', category: 'modern', colors: '{"primary":"#c9a97a","secondary":"#fdf8f3","accent":"#8b6f5a"}' },
+  { name: 'WebInvi Style', slug: 'webinvi-style', description: 'Tema elegan gelap dengan aksen emas dan border shadow halus', category: 'klasik', colors: '{"primary":"#c9a84c","secondary":"#fffdf5","accent":"#7c6124"}' },
+  { name: 'Invilove Style', slug: 'invilove-style', description: 'Tema pink rose lembut dengan font kursif Parisienne', category: 'romantic', colors: '{"primary":"#e88d9c","secondary":"#fef6f7","accent":"#8b3a4a"}' },
+  { name: 'Ringvitation Style', slug: 'ringvitation-style', description: 'Tema ungu lavender dengan ornamen sudut dekoratif', category: 'klasik', colors: '{"primary":"#9b59b6","secondary":"#f8f4fc","accent":"#4a235a"}' },
+  { name: 'Invites Groups Style', slug: 'invites-groups', description: 'Tema peach hangat dengan timeline cerita cinta dan galeri carousel', category: 'modern', colors: '{"primary":"#e8a87c","secondary":"#fef9f4","accent":"#8b5e3c"}' },
 ];
 
 export async function seedTemplates() {

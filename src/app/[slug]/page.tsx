@@ -9,6 +9,10 @@ import IslamicGreen from '@/components/templates/IslamicGreen';
 import IslamiElegant from '@/components/templates/IslamiElegant';
 import ModernMinimal from '@/components/templates/ModernMinimal';
 import MehnikahFloral from '@/components/templates/MehnikahFloral';
+import WebInviStyle from '@/components/templates/WebInviStyle';
+import InviloveStyle from '@/components/templates/InviloveStyle';
+import RingvitationStyle from '@/components/templates/RingvitationStyle';
+import InvitesGroupsStyle from '@/components/templates/InvitesGroupsStyle';
 
 type RsvpStatus = 'idle' | 'submitting' | 'success' | 'error';
 
@@ -117,6 +121,18 @@ function TemplateRenderer({
   }
   if (templateSlug === 'mehnikah-floral') {
     return <MehnikahFloral {...props} />;
+  }
+  if (templateSlug === 'webinvi-style') {
+    return <WebInviStyle {...props} />;
+  }
+  if (templateSlug === 'invilove-style') {
+    return <InviloveStyle {...props} />;
+  }
+  if (templateSlug === 'ringvitation-style') {
+    return <RingvitationStyle {...props} />;
+  }
+  if (templateSlug === 'invites-groups') {
+    return <InvitesGroupsStyle {...props} />;
   }
   // Default: classic-gold and everything else
   return <ClassicGold {...props} />;
