@@ -20,6 +20,14 @@ export default function InvitesGroupsStyle({ invitation, guests, onRsvpSubmit, r
     photos = [];
   }
 
+  const storyTimeline = (() => {
+    try {
+      const parsed = JSON.parse(invitation.story || '[]');
+      if (Array.isArray(parsed) && parsed.length > 0) return parsed as { title: string; date: string; description: string }[];
+    } catch {}
+    return null;
+  })();
+
   const [opened, setOpened] = useState(false);
   const [lightboxImg, setLightboxImg] = useState<string | null>(null);
   const [copied, setCopied] = useState<string | null>(null);
@@ -68,23 +76,25 @@ export default function InvitesGroupsStyle({ invitation, guests, onRsvpSubmit, r
     { id: 'section-wishes', icon: '💬', label: 'Wishes' },
   ];
 
-  const storyItems = [
-    {
-      label: 'The Beginning',
-      year: '2021',
-      text: invitation.story || 'Kisah kita dimulai dari sebuah pertemuan sederhana yang terasa luar biasa.',
-    },
-    {
-      label: 'Becoming One',
-      year: '2022',
-      text: 'Perjalanan kami berlanjut, saling memahami dan tumbuh bersama dalam cinta yang tulus.',
-    },
-    {
-      label: 'The Sacred Promise',
-      year: '2024',
-      text: 'Dan kini, kami siap untuk mengikat janji suci di hadapan Allah SWT dan orang-orang tercinta.',
-    },
-  ];
+  const storyItems = storyTimeline
+    ? storyTimeline.map((item) => ({ label: item.title, year: item.date, text: item.description }))
+    : [
+        {
+          label: 'The Beginning',
+          year: '2021',
+          text: invitation.story || 'Kisah kita dimulai dari sebuah pertemuan sederhana yang terasa luar biasa.',
+        },
+        {
+          label: 'Becoming One',
+          year: '2022',
+          text: 'Perjalanan kami berlanjut, saling memahami dan tumbuh bersama dalam cinta yang tulus.',
+        },
+        {
+          label: 'The Sacred Promise',
+          year: '2024',
+          text: 'Dan kini, kami siap untuk mengikat janji suci di hadapan Allah SWT dan orang-orang tercinta.',
+        },
+      ];
 
   return (
     <div style={{ fontFamily: '"Playfair Display", serif', color: colors.accent, backgroundColor: colors.secondary, paddingBottom: '80px' }}>

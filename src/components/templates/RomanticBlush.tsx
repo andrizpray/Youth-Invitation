@@ -20,6 +20,14 @@ export default function RomanticBlush({ invitation, guests, onRsvpSubmit, rsvpSt
     photos = [];
   }
 
+  const storyTimeline = (() => {
+    try {
+      const parsed = JSON.parse(invitation.story || '[]');
+      if (Array.isArray(parsed) && parsed.length > 0) return parsed as { title: string; date: string; description: string }[];
+    } catch {}
+    return null;
+  })();
+
   const [opened, setOpened] = useState(false);
   const [lightboxImg, setLightboxImg] = useState<string | null>(null);
   const [copied, setCopied] = useState<string | null>(null);
@@ -234,24 +242,47 @@ export default function RomanticBlush({ invitation, guests, onRsvpSubmit, rsvpSt
       )}
 
       {/* SECTION 6: STORY */}
-      {invitation.story && (
+      {(storyTimeline || invitation.story) && (
         <section className="py-20 px-6 text-center" style={{ backgroundColor: colors.secondary }}>
           <ScrollReveal>
             <p className="text-xs uppercase tracking-[0.35em] mb-2" style={{ color: colors.accent }}>Our Love Story</p>
             <p className="text-3xl my-4" style={{ color: colors.primary }}>✦</p>
-            <div className="max-w-md mx-auto space-y-8 mt-6">
-              {['The Beginning', 'Becoming One', 'The Sacred Promise'].map((label, idx) => (
-                <div key={label}>
-                  <p className="text-xs uppercase tracking-widest mb-2" style={{ color: colors.primary }}>{label}</p>
-                  <p className="text-sm italic opacity-80 leading-relaxed">
-                    {idx === 0 && invitation.story}
-                    {idx === 1 && 'Perjalanan kami berlanjut, saling memahami dan tumbuh bersama dalam cinta.'}
-                    {idx === 2 && 'Kini, kami siap mengikat janji suci di hadapan Allah dan orang-orang tercinta.'}
-                  </p>
-                  {idx < 2 && <p className="text-xl mt-6" style={{ color: colors.primary }}>✦</p>}
-                </div>
-              ))}
-            </div>
+            {storyTimeline ? (
+              <div className="max-w-md mx-auto mt-6">
+                {storyTimeline.map((item, idx) => (
+                  <div key={idx} className="flex gap-4 mb-8 last:mb-0">
+                    <div className="flex flex-col items-center">
+                      <div className="w-8 h-8 rounded-full flex items-center justify-center text-white text-xs font-bold flex-shrink-0"
+                        style={{ backgroundColor: colors.primary }}>
+                        {idx + 1}
+                      </div>
+                      {idx < storyTimeline.length - 1 && (
+                        <div className="flex-1 w-px mt-2" style={{ backgroundColor: colors.primary + '44', minHeight: '32px' }} />
+                      )}
+                    </div>
+                    <div className="pt-1 pb-4 text-left flex-1">
+                      <p className="text-xs uppercase tracking-widest mb-1" style={{ color: colors.primary }}>{item.title}</p>
+                      {item.date && <p className="text-xs opacity-50 mb-2">{item.date}</p>}
+                      <p className="text-sm italic opacity-80 leading-relaxed">{item.description}</p>
+                    </div>
+                  </div>
+                ))}
+              </div>
+            ) : (
+              <div className="max-w-md mx-auto space-y-8 mt-6">
+                {['The Beginning', 'Becoming One', 'The Sacred Promise'].map((label, idx) => (
+                  <div key={label}>
+                    <p className="text-xs uppercase tracking-widest mb-2" style={{ color: colors.primary }}>{label}</p>
+                    <p className="text-sm italic opacity-80 leading-relaxed">
+                      {idx === 0 && invitation.story}
+                      {idx === 1 && 'Perjalanan kami berlanjut, saling memahami dan tumbuh bersama dalam cinta.'}
+                      {idx === 2 && 'Kini, kami siap mengikat janji suci di hadapan Allah dan orang-orang tercinta.'}
+                    </p>
+                    {idx < 2 && <p className="text-xl mt-6" style={{ color: colors.primary }}>✦</p>}
+                  </div>
+                ))}
+              </div>
+            )}
           </ScrollReveal>
         </section>
       )}

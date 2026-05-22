@@ -20,6 +20,14 @@ export default function MehnikahFloral({ invitation, guests, onRsvpSubmit, rsvpS
     photos = [];
   }
 
+  const storyTimeline = (() => {
+    try {
+      const parsed = JSON.parse(invitation.story || '[]');
+      if (Array.isArray(parsed) && parsed.length > 0) return parsed as { title: string; date: string; description: string }[];
+    } catch {}
+    return null;
+  })();
+
   const PRIMARY = colors.primary;
   const SECONDARY = colors.secondary;
   const ACCENT = colors.accent;
@@ -196,24 +204,47 @@ export default function MehnikahFloral({ invitation, guests, onRsvpSubmit, rsvpS
         </section>
       )}
 
-      {invitation.story && (
+      {(storyTimeline || invitation.story) && (
         <section className="py-20 px-6 text-center" style={{ backgroundColor: PRIMARY + '11' }}>
           <ScrollReveal>
             <p className="text-xs uppercase tracking-[0.35em] mb-2" style={{ color: ACCENT }}>Our Love Story</p>
             <Divider />
-            <div className="max-w-md mx-auto space-y-8">
-              {['The Beginning', 'Becoming One', 'The Sacred Promise'].map((label, idx) => (
-                <div key={label}>
-                  <p className="text-xs uppercase tracking-widest mb-2" style={{ color: PRIMARY }}>{label}</p>
-                  <p className="text-sm italic leading-relaxed" style={{ color: ACCENT }}>
-                    {idx === 0 && invitation.story}
-                    {idx === 1 && 'Perjalanan kami berlanjut, tumbuh bersama dalam cinta.'}
-                    {idx === 2 && 'Kini kami siap mengikat janji suci di hadapan Allah.'}
-                  </p>
-                  {idx < 2 && <p className="text-xl mt-6" style={{ color: PRIMARY }}>✿</p>}
-                </div>
-              ))}
-            </div>
+            {storyTimeline ? (
+              <div className="max-w-md mx-auto">
+                {storyTimeline.map((item, idx) => (
+                  <div key={idx} className="flex gap-4 mb-8 last:mb-0">
+                    <div className="flex flex-col items-center">
+                      <div className="w-8 h-8 rounded-full flex items-center justify-center text-white text-xs font-bold flex-shrink-0"
+                        style={{ backgroundColor: PRIMARY }}>
+                        {idx + 1}
+                      </div>
+                      {idx < storyTimeline.length - 1 && (
+                        <div className="flex-1 w-px mt-2" style={{ backgroundColor: PRIMARY + '44', minHeight: '32px' }} />
+                      )}
+                    </div>
+                    <div className="pt-1 pb-4 text-left flex-1">
+                      <p className="text-xs uppercase tracking-widest mb-1" style={{ color: PRIMARY }}>{item.title}</p>
+                      {item.date && <p className="text-xs opacity-50 mb-2" style={{ color: ACCENT }}>{item.date}</p>}
+                      <p className="text-sm italic leading-relaxed" style={{ color: ACCENT }}>{item.description}</p>
+                    </div>
+                  </div>
+                ))}
+              </div>
+            ) : (
+              <div className="max-w-md mx-auto space-y-8">
+                {['The Beginning', 'Becoming One', 'The Sacred Promise'].map((label, idx) => (
+                  <div key={label}>
+                    <p className="text-xs uppercase tracking-widest mb-2" style={{ color: PRIMARY }}>{label}</p>
+                    <p className="text-sm italic leading-relaxed" style={{ color: ACCENT }}>
+                      {idx === 0 && invitation.story}
+                      {idx === 1 && 'Perjalanan kami berlanjut, tumbuh bersama dalam cinta.'}
+                      {idx === 2 && 'Kini kami siap mengikat janji suci di hadapan Allah.'}
+                    </p>
+                    {idx < 2 && <p className="text-xl mt-6" style={{ color: PRIMARY }}>✿</p>}
+                  </div>
+                ))}
+              </div>
+            )}
           </ScrollReveal>
         </section>
       )}

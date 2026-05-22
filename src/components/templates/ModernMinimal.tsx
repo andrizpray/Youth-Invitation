@@ -20,6 +20,14 @@ export default function ModernMinimal({ invitation, guests, onRsvpSubmit, rsvpSt
     photos = [];
   }
 
+  const storyTimeline = (() => {
+    try {
+      const parsed = JSON.parse(invitation.story || '[]');
+      if (Array.isArray(parsed) && parsed.length > 0) return parsed as { title: string; date: string; description: string }[];
+    } catch {}
+    return null;
+  })();
+
   const [opened, setOpened] = useState(false);
   const [lightboxImg, setLightboxImg] = useState<string | null>(null);
   const [copied, setCopied] = useState<string | null>(null);
@@ -182,23 +190,46 @@ export default function ModernMinimal({ invitation, guests, onRsvpSubmit, rsvpSt
         </section>
       )}
 
-      {invitation.story && (
+      {(storyTimeline || invitation.story) && (
         <section className="py-24 px-8 text-center" style={{ backgroundColor: offWhite }}>
           <ScrollReveal>
             <p className="text-xs uppercase tracking-[0.4em] mb-10" style={{ color: gray }}>◆ Our Story ◆</p>
-            <div className="max-w-md mx-auto space-y-10">
-              {['The Beginning', 'Becoming One', 'The Sacred Promise'].map((label, idx) => (
-                <div key={label}>
-                  <p className="text-xs uppercase tracking-widest mb-2" style={{ color: nearBlack }}>{label}</p>
-                  <p className="text-sm italic leading-loose" style={{ color: nearBlack, opacity: 0.7 }}>
-                    {idx === 0 && invitation.story}
-                    {idx === 1 && 'Our journey continued, growing together in love and understanding.'}
-                    {idx === 2 && 'Now, we are ready to make a sacred promise before God and our loved ones.'}
-                  </p>
-                  {idx < 2 && <p className="mt-6" style={{ color: gray }}>◆</p>}
-                </div>
-              ))}
-            </div>
+            {storyTimeline ? (
+              <div className="max-w-md mx-auto">
+                {storyTimeline.map((item, idx) => (
+                  <div key={idx} className="flex gap-4 mb-10 last:mb-0">
+                    <div className="flex flex-col items-center">
+                      <div className="w-8 h-8 flex items-center justify-center text-xs font-bold flex-shrink-0"
+                        style={{ backgroundColor: nearBlack, color: offWhite, borderRadius: '2px' }}>
+                        {idx + 1}
+                      </div>
+                      {idx < storyTimeline.length - 1 && (
+                        <div className="flex-1 w-px mt-2" style={{ backgroundColor: nearBlack + '22', minHeight: '32px' }} />
+                      )}
+                    </div>
+                    <div className="pt-1 pb-4 text-left flex-1">
+                      <p className="text-xs uppercase tracking-widest mb-1" style={{ color: nearBlack }}>{item.title}</p>
+                      {item.date && <p className="text-xs mb-2" style={{ color: gray }}>{item.date}</p>}
+                      <p className="text-sm italic leading-loose" style={{ color: nearBlack, opacity: 0.7 }}>{item.description}</p>
+                    </div>
+                  </div>
+                ))}
+              </div>
+            ) : (
+              <div className="max-w-md mx-auto space-y-10">
+                {['The Beginning', 'Becoming One', 'The Sacred Promise'].map((label, idx) => (
+                  <div key={label}>
+                    <p className="text-xs uppercase tracking-widest mb-2" style={{ color: nearBlack }}>{label}</p>
+                    <p className="text-sm italic leading-loose" style={{ color: nearBlack, opacity: 0.7 }}>
+                      {idx === 0 && invitation.story}
+                      {idx === 1 && 'Our journey continued, growing together in love and understanding.'}
+                      {idx === 2 && 'Now, we are ready to make a sacred promise before God and our loved ones.'}
+                    </p>
+                    {idx < 2 && <p className="mt-6" style={{ color: gray }}>◆</p>}
+                  </div>
+                ))}
+              </div>
+            )}
           </ScrollReveal>
         </section>
       )}
