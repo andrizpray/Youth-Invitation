@@ -87,6 +87,7 @@ export default function ClientNewInvitation() {
       const res = await fetch('/api/invitations', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
+        credentials: 'include',
         body: JSON.stringify({
           partner_name: partnerName,
           partner_name2: partnerName2,

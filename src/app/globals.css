@@ -1,11 +1,22 @@
+@import url("https://fonts.googleapis.com/css2?family=Cormorant+Infant:ital,wght@0,300;0,400;0,500;0,600;0,700;1,400&family=Inter:wght@400;500;600;700&display=swap");
 @import "tailwindcss";
 
 @theme {
-  --font-serif: 'Playfair Display', serif;
-  --font-cursive: 'Great Vibes', cursive;
+  --font-serif: 'Cormorant Infant', serif;
   --font-sans: 'Inter', sans-serif;
 }
 
+/* ── Design system tokens ── */
+:root {
+  --ds-navy:        #0F172A; /* slate-900 */
+  --ds-navy-alt:    #1E293B; /* slate-800 */
+  --ds-navy-dark:   #020617; /* slate-950 */
+  --ds-green:       #22C55E; /* green-500 */
+  --ds-border:      #334155; /* slate-700 */
+  --ds-danger:      #EF4444; /* red-500 */
+}
+
+/* ── Base ── */
 html {
   scroll-behavior: smooth;
 }
@@ -14,7 +25,48 @@ body {
   font-family: 'Inter', sans-serif;
 }
 
-/* Invitation page styles */
+/* ── Global cursor for interactive elements ── */
+button,
+[role="button"],
+select,
+summary,
+label[for],
+[type="file"] {
+  cursor: pointer;
+}
+
+a {
+  cursor: pointer;
+}
+
+/* ── Keyboard focus (visible only for keyboard nav) ── */
+:focus-visible {
+  outline: 2px solid #22C55E;
+  outline-offset: 2px;
+  border-radius: 4px;
+}
+
+/* ── Selection ── */
+::selection {
+  background-color: #22C55E;
+  color: #fff;
+}
+
+/* ── Reduced-motion ── */
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+  }
+  html {
+    scroll-behavior: auto;
+  }
+}
+
+/* ── Invitation page ── */
 .invitation-container {
   max-width: 480px;
   margin: 0 auto;
@@ -31,6 +83,14 @@ body {
 .scroll-reveal.reveal-visible {
   opacity: 1;
   transform: translateY(0);
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .scroll-reveal {
+    opacity: 1;
+    transform: none;
+    transition: none;
+  }
 }
 
 /* ── Countdown digit flip ── */

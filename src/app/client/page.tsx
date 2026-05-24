@@ -24,7 +24,7 @@ export default function ClientDashboard() {
   const router = useRouter();
 
   useEffect(() => {
-    fetch('/api/invitations')
+    fetch('/api/invitations', { credentials: 'include' })
       .then(res => {
         if (!res.ok) throw new Error('Gagal memuat');
         return res.json();
@@ -68,7 +68,7 @@ export default function ClientDashboard() {
             💌 Youth Invitation
           </Link>
           <button
-            onClick={() => { fetch('/api/auth/logout', { method: 'POST' }).then(() => router.push('/login')); }}
+            onClick={() => { fetch('/api/auth/logout', { method: 'POST', credentials: 'include' }).then(() => router.push('/login')); }}
             className="text-sm text-gray-500 hover:text-gray-700"
           >
             Logout

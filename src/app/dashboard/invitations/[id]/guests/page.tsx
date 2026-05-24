@@ -21,6 +21,18 @@ interface Invitation {
   slug: string;
 }
 
+const IconBack = () => (
+  <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
+    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M10 19l-7-7m0 0l7-7m-7 7h18" />
+  </svg>
+);
+
+const IconUsers = () => (
+  <svg className="w-8 h-8 text-slate-400" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
+    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0zm6 3a2 2 0 11-4 0 2 2 0 014 0zM7 10a2 2 0 11-4 0 2 2 0 014 0z" />
+  </svg>
+);
+
 export default function GuestsPage() {
   const params = useParams();
   const invitationId = params.id as string;
@@ -33,14 +45,12 @@ export default function GuestsPage() {
   const [copiedCode, setCopiedCode] = useState<string | null>(null);
   const [guestError, setGuestError] = useState('');
 
-  // Form states
   const [formName, setFormName] = useState('');
   const [formEmail, setFormEmail] = useState('');
   const [formPhone, setFormPhone] = useState('');
   const [formError, setFormError] = useState('');
   const [formLoading, setFormLoading] = useState(false);
 
-  // CSV states
   const [csvText, setCsvText] = useState('');
   const [csvLoading, setCsvLoading] = useState(false);
   const [csvResult, setCsvResult] = useState<{ added: number; errors?: string[] } | null>(null);
@@ -64,37 +74,23 @@ export default function GuestsPage() {
     }
   };
 
-  useEffect(() => {
-    loadGuests();
-  }, [invitationId]);
+  useEffect(() => { loadGuests(); }, [invitationId]);
 
   const handleAddGuest = async (e: React.FormEvent) => {
     e.preventDefault();
     setFormError('');
-    if (!formName.trim()) {
-      setFormError('Nama wajib diisi');
-      return;
-    }
+    if (!formName.trim()) { setFormError('Nama wajib diisi'); return; }
 
     setFormLoading(true);
     try {
       const res = await fetch(`/api/guests/${invitationId}`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          name: formName,
-          email: formEmail || null,
-          phone: formPhone || null,
-        }),
+        body: JSON.stringify({ name: formName, email: formEmail || null, phone: formPhone || null }),
       });
       const data = await res.json();
-      if (!res.ok) {
-        setFormError(data.error || 'Gagal menambah tamu');
-        return;
-      }
-      setFormName('');
-      setFormEmail('');
-      setFormPhone('');
+      if (!res.ok) { setFormError(data.error || 'Gagal menambah tamu'); return; }
+      setFormName(''); setFormEmail(''); setFormPhone('');
       setShowAddForm(false);
       loadGuests();
     } catch {
@@ -133,36 +129,26 @@ export default function GuestsPage() {
   };
 
   const handleCsvUpload = async () => {
-    if (!csvText.trim()) {
-      setCsvResult({ added: 0, errors: ['CSV kosong'] });
-      return;
-    }
+    if (!csvText.trim()) { setCsvResult({ added: 0, errors: ['CSV kosong'] }); return; }
 
     setCsvLoading(true);
     try {
-      // Parse CSV: name,email,phone
       const lines = csvText.trim().split('\n');
-      const guests = lines
+      const guestList = lines
         .map(line => {
           const parts = line.split(',').map(p => p.trim());
-          return {
-            name: parts[0] || '',
-            email: parts[1] || '',
-            phone: parts[2] || '',
-          };
+          return { name: parts[0] || '', email: parts[1] || '', phone: parts[2] || '' };
         })
         .filter(g => g.name);
 
       const res = await fetch(`/api/guests/${invitationId}`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ guests }),
+        body: JSON.stringify({ guests: guestList }),
       });
       const data = await res.json();
       setCsvResult({ added: data.added, errors: data.errors });
-      if (data.added > 0) {
-        loadGuests();
-      }
+      if (data.added > 0) loadGuests();
     } catch {
       setCsvResult({ added: 0, errors: ['Gagal mengunggah'] });
     } finally {
@@ -174,33 +160,20 @@ export default function GuestsPage() {
     const file = e.target.files?.[0];
     if (!file) return;
     const reader = new FileReader();
-    reader.onload = (evt) => {
-      setCsvText(evt.target?.result as string || '');
-    };
+    reader.onload = (evt) => setCsvText(evt.target?.result as string || '');
     reader.readAsText(file);
   };
 
-  // Export guests to CSV
   const handleExportCsv = () => {
     if (guests.length === 0) return;
-
     const headers = ['Nama', 'Email', 'Telepon', 'Kode', 'Status', 'Jumlah Orang', 'Pesan'];
     const rows = guests.map(g => [
-      g.name,
-      g.email || '',
-      g.phone || '',
-      g.code || '',
+      g.name, g.email || '', g.phone || '', g.code || '',
       g.is_attending === 1 ? 'Hadir' : g.is_attending === 0 && g.message ? 'Tidak Hadir' : 'Belum RSVP',
-      g.guest_count.toString(),
-      g.message || '',
+      g.guest_count.toString(), g.message || '',
     ]);
-
-    const csvContent = [
-      headers.join(','),
-      ...rows.map(row => row.map(cell => `"${cell.replace(/"/g, '""')}"`).join(',')),
-    ].join('\n');
-
-    const blob = new Blob(['\ufeff' + csvContent], { type: 'text/csv;charset=utf-8;' });
+    const csvContent = [headers.join(','), ...rows.map(row => row.map(cell => `"${cell.replace(/"/g, '""')}"`).join(','))].join('\n');
+    const blob = new Blob(['﻿' + csvContent], { type: 'text/csv;charset=utf-8;' });
     const url = URL.createObjectURL(blob);
     const link = document.createElement('a');
     link.href = url;
@@ -209,15 +182,16 @@ export default function GuestsPage() {
     URL.revokeObjectURL(url);
   };
 
-  // Stats
   const totalGuests = guests.length;
   const attendingGuests = guests.filter(g => g.is_attending === 1).length;
   const totalPersonCount = guests.reduce((sum, g) => sum + g.guest_count, 0);
 
+  const inputCls = 'w-full px-4 py-2 border border-slate-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-green-500 transition-all duration-150';
+
   if (loading) {
     return (
       <div className="flex items-center justify-center py-20">
-        <div className="animate-spin w-8 h-8 border-4 border-amber-500 border-t-transparent rounded-full" />
+        <div className="animate-spin w-8 h-8 border-4 border-green-500 border-t-transparent rounded-full" />
       </div>
     );
   }
@@ -226,124 +200,93 @@ export default function GuestsPage() {
     <div className="max-w-4xl mx-auto">
       {/* Header */}
       <div className="flex items-center gap-4 mb-6">
-        <Link
-          href="/dashboard/invitations"
-          className="p-2 rounded-lg hover:bg-gray-100 transition-all"
-        >
-          ← Kembali
+        <Link href="/dashboard/invitations" className="p-2 rounded-lg hover:bg-slate-100 transition-all duration-150 text-slate-600" aria-label="Kembali">
+          <IconBack />
         </Link>
         <div className="flex-1">
-          <h1 className="text-2xl font-semibold text-gray-900">Kelola Tamu</h1>
-          <p className="text-gray-500 text-sm">
-            {invitation?.slug && `${window.location.origin}/${invitation.slug}`}
+          <h1 className="text-2xl font-semibold text-slate-900">Kelola Tamu</h1>
+          <p className="text-slate-500 text-sm">
+            {invitation?.slug && typeof window !== 'undefined' && `${window.location.origin}/${invitation.slug}`}
           </p>
         </div>
       </div>
 
       {/* Stats */}
       <div className="grid grid-cols-1 sm:grid-cols-3 gap-4 mb-6">
-        <div className="bg-white rounded-xl p-4 border border-gray-100">
-          <p className="text-gray-500 text-xs uppercase tracking-wider mb-1">Total Tamu</p>
-          <p className="text-2xl font-bold text-gray-900">{totalGuests}</p>
+        <div className="bg-white rounded-xl p-4 border border-slate-100 shadow-sm">
+          <p className="text-slate-500 text-xs uppercase tracking-wider mb-1">Total Tamu</p>
+          <p className="text-2xl font-bold text-slate-900">{totalGuests}</p>
         </div>
-        <div className="bg-white rounded-xl p-4 border border-gray-100">
-          <p className="text-gray-500 text-xs uppercase tracking-wider mb-1">Hadir</p>
+        <div className="bg-white rounded-xl p-4 border border-slate-100 shadow-sm">
+          <p className="text-slate-500 text-xs uppercase tracking-wider mb-1">Hadir</p>
           <p className="text-2xl font-bold text-green-600">{attendingGuests}</p>
         </div>
-        <div className="bg-white rounded-xl p-4 border border-gray-100">
-          <p className="text-gray-500 text-xs uppercase tracking-wider mb-1">Jumlah Orang</p>
-          <p className="text-2xl font-bold text-gray-900">{totalPersonCount}</p>
+        <div className="bg-white rounded-xl p-4 border border-slate-100 shadow-sm">
+          <p className="text-slate-500 text-xs uppercase tracking-wider mb-1">Jumlah Orang</p>
+          <p className="text-2xl font-bold text-slate-900">{totalPersonCount}</p>
         </div>
       </div>
 
       {guestError && (
-        <div className="mb-4 p-3 bg-red-50 border border-red-200 text-red-700 text-sm rounded-xl">
-          ❌ {guestError}
-        </div>
+        <div role="alert" className="mb-4 p-3 bg-red-50 border border-red-200 text-red-700 text-sm rounded-xl">{guestError}</div>
       )}
 
       {/* Actions */}
-      <div className="flex gap-3 mb-6">
+      <div className="flex gap-3 mb-6 flex-wrap">
         <button
           onClick={() => setShowAddForm(!showAddForm)}
-          className="px-4 py-2 bg-amber-500 hover:bg-amber-600 text-white rounded-xl font-medium text-sm transition-all"
+          className="px-4 py-2 bg-green-500 hover:bg-green-600 text-white rounded-xl font-medium text-sm transition-all duration-150"
         >
           + Tambah Tamu
         </button>
         <button
           onClick={() => setShowCsvModal(true)}
-          className="px-4 py-2 bg-white hover:bg-gray-50 text-gray-700 rounded-xl font-medium text-sm border border-gray-200 transition-all"
+          className="px-4 py-2 bg-white hover:bg-slate-50 text-slate-700 rounded-xl font-medium text-sm border border-slate-200 transition-all duration-150"
         >
-          📄 Upload CSV
+          Upload CSV
         </button>
         <button
           onClick={handleExportCsv}
           disabled={guests.length === 0}
-          className="px-4 py-2 bg-white hover:bg-gray-50 text-gray-700 rounded-xl font-medium text-sm border border-gray-200 transition-all disabled:opacity-50 disabled:cursor-not-allowed"
+          className="px-4 py-2 bg-white hover:bg-slate-50 text-slate-700 rounded-xl font-medium text-sm border border-slate-200 transition-all duration-150 disabled:opacity-50 disabled:cursor-not-allowed"
         >
-          📥 Export CSV
+          Export CSV
         </button>
         <a
           href={`/dashboard/invitations/${invitationId}/whatsapp`}
-          className="px-4 py-2 bg-green-500 hover:bg-green-600 text-white rounded-xl font-medium text-sm transition-all"
+          className="px-4 py-2 bg-green-600 hover:bg-green-700 text-white rounded-xl font-medium text-sm transition-all duration-150"
         >
-          📱 Kirim WA
+          Kirim WhatsApp
         </a>
       </div>
 
       {/* Add Form */}
       {showAddForm && (
-        <div className="bg-white rounded-2xl p-6 border border-gray-100 mb-6">
-          <h2 className="font-semibold text-gray-900 mb-4">Tambah Tamu Baru</h2>
+        <div className="bg-white rounded-2xl p-6 border border-slate-100 shadow-sm mb-6">
+          <h2 className="font-semibold text-slate-900 mb-4">Tambah Tamu Baru</h2>
           {formError && (
-            <div className="bg-red-50 text-red-600 px-4 py-2 rounded-lg mb-4 text-sm">{formError}</div>
+            <div role="alert" className="bg-red-50 border border-red-200 text-red-700 px-4 py-2 rounded-lg mb-4 text-sm">{formError}</div>
           )}
           <form onSubmit={handleAddGuest} className="space-y-4">
             <div className="grid grid-cols-3 gap-4">
               <div className="col-span-3 md:col-span-1">
-                <label className="block text-sm font-medium text-gray-700 mb-1">Nama *</label>
-                <input
-                  type="text"
-                  value={formName}
-                  onChange={(e) => setFormName(e.target.value)}
-                  className="w-full px-4 py-2 border border-gray-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-amber-400"
-                  placeholder="Nama tamu"
-                />
+                <label className="block text-sm font-medium text-slate-700 mb-1">Nama *</label>
+                <input type="text" value={formName} onChange={(e) => setFormName(e.target.value)} className={inputCls} placeholder="Nama tamu" />
               </div>
               <div className="col-span-3 md:col-span-1">
-                <label className="block text-sm font-medium text-gray-700 mb-1">Email</label>
-                <input
-                  type="email"
-                  value={formEmail}
-                  onChange={(e) => setFormEmail(e.target.value)}
-                  className="w-full px-4 py-2 border border-gray-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-amber-400"
-                  placeholder="email@contoh.com"
-                />
+                <label className="block text-sm font-medium text-slate-700 mb-1">Email</label>
+                <input type="email" value={formEmail} onChange={(e) => setFormEmail(e.target.value)} className={inputCls} placeholder="email@contoh.com" />
               </div>
               <div className="col-span-3 md:col-span-1">
-                <label className="block text-sm font-medium text-gray-700 mb-1">WhatsApp</label>
-                <input
-                  type="text"
-                  value={formPhone}
-                  onChange={(e) => setFormPhone(e.target.value)}
-                  className="w-full px-4 py-2 border border-gray-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-amber-400"
-                  placeholder="08xxx"
-                />
+                <label className="block text-sm font-medium text-slate-700 mb-1">WhatsApp</label>
+                <input type="text" value={formPhone} onChange={(e) => setFormPhone(e.target.value)} className={inputCls} placeholder="08xxx" />
               </div>
             </div>
             <div className="flex gap-2">
-              <button
-                type="submit"
-                disabled={formLoading}
-                className="px-4 py-2 bg-amber-500 hover:bg-amber-600 disabled:bg-amber-300 text-white rounded-xl font-medium text-sm transition-all"
-              >
+              <button type="submit" disabled={formLoading} className="px-4 py-2 bg-green-500 hover:bg-green-600 disabled:bg-green-300 text-white rounded-xl font-medium text-sm transition-all duration-150">
                 {formLoading ? 'Menyimpan...' : 'Simpan'}
               </button>
-              <button
-                type="button"
-                onClick={() => setShowAddForm(false)}
-                className="px-4 py-2 bg-gray-100 hover:bg-gray-200 text-gray-700 rounded-xl font-medium text-sm transition-all"
-              >
+              <button type="button" onClick={() => setShowAddForm(false)} className="px-4 py-2 bg-slate-100 hover:bg-slate-200 text-slate-700 rounded-xl font-medium text-sm transition-all duration-150">
                 Batal
               </button>
             </div>
@@ -353,45 +296,45 @@ export default function GuestsPage() {
 
       {/* Guest List */}
       {guests.length === 0 ? (
-        <div className="bg-white rounded-2xl p-12 border border-gray-100 text-center">
-          <div className="text-5xl mb-4">👥</div>
-          <h2 className="text-lg font-semibold text-gray-900 mb-2">Belum Ada Tamu</h2>
-          <p className="text-gray-500 mb-6">Tambahkan tamu satu per satu atau upload CSV</p>
+        <div className="bg-white rounded-2xl p-12 border border-slate-100 shadow-sm text-center">
+          <div className="flex justify-center mb-4"><IconUsers /></div>
+          <h2 className="text-lg font-semibold text-slate-900 mb-2">Belum Ada Tamu</h2>
+          <p className="text-slate-500 mb-6">Tambahkan tamu satu per satu atau upload CSV</p>
         </div>
       ) : (
-        <div className="bg-white rounded-2xl border border-gray-100 overflow-hidden">
+        <div className="bg-white rounded-2xl border border-slate-100 shadow-sm overflow-hidden">
           <table className="w-full">
-            <thead className="bg-gray-50 border-b border-gray-100">
+            <thead className="bg-slate-50 border-b border-slate-100">
               <tr>
-                <th className="text-left px-4 py-3 text-xs font-medium text-gray-500 uppercase tracking-wider">Nama</th>
-                <th className="text-left px-4 py-3 text-xs font-medium text-gray-500 uppercase tracking-wider hidden md:table-cell">Kontak</th>
-                <th className="text-left px-4 py-3 text-xs font-medium text-gray-500 uppercase tracking-wider">Status</th>
-                <th className="text-left px-4 py-3 text-xs font-medium text-gray-500 uppercase tracking-wider">Link</th>
-                <th className="text-right px-4 py-3 text-xs font-medium text-gray-500 uppercase tracking-wider">Aksi</th>
+                <th className="text-left px-4 py-3 text-xs font-medium text-slate-500 uppercase tracking-wider">Nama</th>
+                <th className="text-left px-4 py-3 text-xs font-medium text-slate-500 uppercase tracking-wider hidden md:table-cell">Kontak</th>
+                <th className="text-left px-4 py-3 text-xs font-medium text-slate-500 uppercase tracking-wider">Status</th>
+                <th className="text-left px-4 py-3 text-xs font-medium text-slate-500 uppercase tracking-wider">Link</th>
+                <th className="text-right px-4 py-3 text-xs font-medium text-slate-500 uppercase tracking-wider">Aksi</th>
               </tr>
             </thead>
-            <tbody className="divide-y divide-gray-100">
+            <tbody className="divide-y divide-slate-100">
               {guests.map((guest) => (
-                <tr key={guest.id} className="hover:bg-gray-50">
+                <tr key={guest.id} className="hover:bg-slate-50 transition-colors duration-100">
                   <td className="px-4 py-3">
-                    <p className="font-medium text-gray-900">{guest.name}</p>
-                    <p className="text-xs text-gray-400 md:hidden">{guest.phone || guest.email}</p>
+                    <p className="font-medium text-slate-900">{guest.name}</p>
+                    <p className="text-xs text-slate-400 md:hidden">{guest.phone || guest.email}</p>
                   </td>
                   <td className="px-4 py-3 hidden md:table-cell">
-                    <p className="text-sm text-gray-600">{guest.phone || '-'}</p>
-                    <p className="text-xs text-gray-400">{guest.email || '-'}</p>
+                    <p className="text-sm text-slate-600">{guest.phone || '-'}</p>
+                    <p className="text-xs text-slate-400">{guest.email || '-'}</p>
                   </td>
                   <td className="px-4 py-3">
                     {guest.is_attending === 1 ? (
                       <span className="inline-flex items-center px-2 py-1 rounded-full text-xs font-medium bg-green-100 text-green-700">
-                        ✓ Hadir ({guest.guest_count})
+                        Hadir ({guest.guest_count})
                       </span>
                     ) : guest.is_attending === 0 && guest.message ? (
                       <span className="inline-flex items-center px-2 py-1 rounded-full text-xs font-medium bg-red-100 text-red-700">
-                        ✗ Tidak Hadir
+                        Tidak Hadir
                       </span>
                     ) : (
-                      <span className="inline-flex items-center px-2 py-1 rounded-full text-xs font-medium bg-gray-100 text-gray-500">
+                      <span className="inline-flex items-center px-2 py-1 rounded-full text-xs font-medium bg-slate-100 text-slate-500">
                         Belum RSVP
                       </span>
                     )}
@@ -400,9 +343,9 @@ export default function GuestsPage() {
                     <button
                       onClick={() => guest.code && handleCopyLink(guest.code)}
                       disabled={!guest.code}
-                      className="text-xs text-amber-600 hover:text-amber-700 font-medium disabled:text-gray-400"
+                      className="text-xs text-green-600 hover:text-green-700 font-medium disabled:text-slate-400 transition-colors duration-150"
                     >
-                      {copiedCode === guest.code ? '✓ Disalin' : 'Salin Link'}
+                      {copiedCode === guest.code ? 'Disalin' : 'Salin Link'}
                     </button>
                   </td>
                   <td className="px-4 py-3 text-right">
@@ -410,14 +353,14 @@ export default function GuestsPage() {
                       {guest.phone && (
                         <button
                           onClick={() => handleSendWa(guest.id)}
-                          className="text-xs text-green-600 hover:text-green-700 font-medium"
+                          className="text-xs text-green-600 hover:text-green-700 font-medium transition-colors duration-150"
                         >
-                          📱 WA
+                          WA
                         </button>
                       )}
                       <button
                         onClick={() => handleDeleteGuest(guest.id)}
-                        className="text-xs text-red-500 hover:text-red-700"
+                        className="text-xs text-red-500 hover:text-red-700 transition-colors duration-150"
                       >
                         Hapus
                       </button>
@@ -432,36 +375,30 @@ export default function GuestsPage() {
 
       {/* CSV Modal */}
       {showCsvModal && (
-        <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4">
-          <div className="bg-white rounded-2xl p-6 w-full max-w-lg">
-            <h2 className="text-lg font-semibold text-gray-900 mb-4">Upload CSV Tamu</h2>
-            <p className="text-sm text-gray-500 mb-4">
-              Format: <code className="bg-gray-100 px-1 rounded">nama,email,phone</code> (satu per baris)
+        <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4" role="dialog" aria-modal="true" aria-label="Upload CSV Tamu">
+          <div className="bg-white rounded-2xl p-6 w-full max-w-lg shadow-xl">
+            <h2 className="text-lg font-semibold text-slate-900 mb-4">Upload CSV Tamu</h2>
+            <p className="text-sm text-slate-500 mb-4">
+              Format: <code className="bg-slate-100 px-1 rounded font-mono">nama,email,phone</code> (satu per baris)
             </p>
 
-            <input
-              ref={fileInputRef}
-              type="file"
-              accept=".csv,.txt"
-              onChange={handleFileUpload}
-              className="hidden"
-            />
+            <input ref={fileInputRef} type="file" accept=".csv,.txt" onChange={handleFileUpload} className="hidden" />
             <button
               onClick={() => fileInputRef.current?.click()}
-              className="w-full py-3 border-2 border-dashed border-gray-300 rounded-xl text-gray-500 hover:border-amber-400 hover:text-amber-600 transition-all mb-4"
+              className="w-full py-3 border-2 border-dashed border-slate-300 rounded-xl text-slate-500 hover:border-green-400 hover:text-green-600 transition-all duration-150 mb-4 text-sm"
             >
-              📁 Pilih File CSV
+              Pilih File CSV
             </button>
 
             <textarea
               value={csvText}
               onChange={(e) => setCsvText(e.target.value)}
-              placeholder="Atau paste CSV di sini...&#10;Budi,budi@email.com,08123456789&#10;Ani,ani@email.com,08987654321"
-              className="w-full h-40 px-4 py-3 border border-gray-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-amber-400 text-sm font-mono resize-none"
+              placeholder={"Atau paste CSV di sini...\nBudi,budi@email.com,08123456789\nAni,ani@email.com,08987654321"}
+              className="w-full h-40 px-4 py-3 border border-slate-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-green-500 text-sm font-mono resize-none transition-all duration-150"
             />
 
             {csvResult && (
-              <div className={`mt-4 p-3 rounded-xl text-sm ${csvResult.errors ? 'bg-yellow-50 text-yellow-800' : 'bg-green-50 text-green-800'}`}>
+              <div className={`mt-4 p-3 rounded-xl text-sm ${csvResult.errors?.length ? 'bg-yellow-50 text-yellow-800' : 'bg-green-50 text-green-800'}`}>
                 <p className="font-medium">{csvResult.added} tamu berhasil ditambahkan</p>
                 {csvResult.errors && csvResult.errors.length > 0 && (
                   <ul className="mt-2 text-xs list-disc list-inside">
@@ -475,13 +412,13 @@ export default function GuestsPage() {
               <button
                 onClick={handleCsvUpload}
                 disabled={csvLoading || !csvText.trim()}
-                className="flex-1 py-2 bg-amber-500 hover:bg-amber-600 disabled:bg-amber-300 text-white rounded-xl font-medium text-sm transition-all"
+                className="flex-1 py-2 bg-green-500 hover:bg-green-600 disabled:bg-green-300 text-white rounded-xl font-medium text-sm transition-all duration-150"
               >
                 {csvLoading ? 'Mengunggah...' : 'Upload'}
               </button>
               <button
                 onClick={() => { setShowCsvModal(false); setCsvText(''); setCsvResult(null); }}
-                className="px-4 py-2 bg-gray-100 hover:bg-gray-200 text-gray-700 rounded-xl font-medium text-sm transition-all"
+                className="px-4 py-2 bg-slate-100 hover:bg-slate-200 text-slate-700 rounded-xl font-medium text-sm transition-all duration-150"
               >
                 Tutup
               </button>

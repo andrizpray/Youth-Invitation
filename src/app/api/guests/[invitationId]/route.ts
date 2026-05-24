@@ -118,15 +118,19 @@ export async function POST(
   const id = uuidv4();
   const code = generateCode();
 
-  db.prepare(`
-    INSERT INTO guests (id, invitation_id, name, email, phone, code)
-    VALUES (?, ?, ?, ?, ?, ?)
-  `).run(id, invitationId, body.name.trim(), body.email || null, body.phone || null, code);
-
-  return NextResponse.json({
-    success: true,
-    guest: { id, name: body.name.trim(), email: body.email, phone: body.phone, code },
-  });
+  try {
+    db.prepare(`
+      INSERT INTO guests (id, invitation_id, name, email, phone, code)
+      VALUES (?, ?, ?, ?, ?, ?)
+    `).run(id, invitationId, body.name.trim(), body.email || null, body.phone || null, code);
+    return NextResponse.json({
+      success: true,
+      guest: { id, name: body.name.trim(), email: body.email, phone: body.phone, code },
+    });
+  } catch (error) {
+    console.error('Add guest error:', error);
+    return NextResponse.json({ error: 'Terjadi kesalahan server' }, { status: 500 });
+  }
 }
 
 // DELETE - Remove a guest
@@ -158,9 +162,13 @@ export async function DELETE(
     return NextResponse.json({ error: 'Guest ID diperlukan' }, { status: 400 });
   }
 
-  db.prepare('DELETE FROM guests WHERE id = ? AND invitation_id = ?').run(guestId, invitationId);
-
-  return NextResponse.json({ success: true });
+  try {
+    db.prepare('DELETE FROM guests WHERE id = ? AND invitation_id = ?').run(guestId, invitationId);
+    return NextResponse.json({ success: true });
+  } catch (error) {
+    console.error('Delete guest error:', error);
+    return NextResponse.json({ error: 'Terjadi kesalahan server' }, { status: 500 });
+  }
 }
 
 // PATCH - Update guest
@@ -191,19 +199,23 @@ export async function PATCH(
     return NextResponse.json({ error: 'Guest ID diperlukan' }, { status: 400 });
   }
 
-  db.prepare(`
-    UPDATE guests SET
-      name = COALESCE(?, name),
-      email = COALESCE(?, email),
-      phone = COALESCE(?, phone)
-    WHERE id = ? AND invitation_id = ?
-  `).run(
-    body.name?.trim() || null,
-    body.email || null,
-    body.phone || null,
-    body.id,
-    invitationId
-  );
-
-  return NextResponse.json({ success: true });
+  try {
+    db.prepare(`
+      UPDATE guests SET
+        name = COALESCE(?, name),
+        email = COALESCE(?, email),
+        phone = COALESCE(?, phone)
+      WHERE id = ? AND invitation_id = ?
+    `).run(
+      body.name?.trim() || null,
+      body.email || null,
+      body.phone || null,
+      body.id,
+      invitationId
+    );
+    return NextResponse.json({ success: true });
+  } catch (error) {
+    console.error('Update guest error:', error);
+    return NextResponse.json({ error: 'Terjadi kesalahan server' }, { status: 500 });
+  }
 }

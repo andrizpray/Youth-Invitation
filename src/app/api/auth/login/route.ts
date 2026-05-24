@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { getDb } from '@/lib/db';
-import { verifyPassword, generateToken, setAuthCookie } from '@/lib/auth';
+import { verifyPassword, generateToken } from '@/lib/auth';
 import { User } from '@/lib/types';
 import { rateLimit } from '@/lib/rateLimit';
 
@@ -48,9 +48,8 @@ export async function POST(req: NextRequest) {
     }
 
     const token = await generateToken({ id: user.id, email: user.email, role: user.role });
-    await setAuthCookie(token);
-
-    return NextResponse.json({
+    const isHttps = (req.headers.get('x-forwarded-proto') ?? '').startsWith('https');
+    const response = NextResponse.json({
       success: true,
       user: {
         id: user.id,
@@ -59,6 +58,14 @@ export async function POST(req: NextRequest) {
         role: user.role,
       },
     });
+    response.cookies.set('auth_token', token, {
+      httpOnly: true,
+      secure: isHttps,
+      sameSite: 'lax',
+      path: '/',
+      maxAge: 7 * 24 * 60 * 60,
+    });
+    return response;
   } catch (error) {
     console.error('Login error:', error);
     return NextResponse.json({ error: 'Terjadi kesalahan server' }, { status: 500 });

@@ -19,6 +19,30 @@ interface DashboardStats {
   total_rsvp: number;
 }
 
+const IconMail = () => (
+  <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
+    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M3 8l7.89 5.26a2 2 0 002.22 0L21 8M5 19h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z" />
+  </svg>
+);
+
+const IconCheck = () => (
+  <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
+    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" />
+  </svg>
+);
+
+const IconClipboard = () => (
+  <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
+    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2" />
+  </svg>
+);
+
+const IconAlert = () => (
+  <svg className="w-8 h-8 text-red-500 mx-auto mb-4" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
+    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z" />
+  </svg>
+);
+
 export default function DashboardPage() {
   const [stats, setStats] = useState<DashboardStats | null>(null);
   const [userName, setUserName] = useState('');
@@ -31,8 +55,8 @@ export default function DashboardPage() {
     const fetchData = async () => {
       try {
         const [meRes, invRes] = await Promise.all([
-          fetch('/api/auth/me'),
-          fetch('/api/invitations'),
+          fetch('/api/auth/me', { credentials: 'include' }),
+          fetch('/api/invitations', { credentials: 'include' }),
         ]);
 
         if (!meRes.ok || !invRes.ok) {
@@ -51,7 +75,7 @@ export default function DashboardPage() {
             total_rsvp: invs.reduce((acc, i) => acc + (i.total_guests || 0), 0),
           });
         }
-      } catch (e) {
+      } catch {
         if (!cancelled) {
           setError('Gagal memuat dashboard. Periksa koneksi Anda.');
         }
@@ -67,7 +91,7 @@ export default function DashboardPage() {
   if (loading) {
     return (
       <div className="flex items-center justify-center py-20">
-        <div className="animate-spin w-8 h-8 border-4 border-amber-500 border-t-transparent rounded-full" />
+        <div className="animate-spin w-8 h-8 border-4 border-green-500 border-t-transparent rounded-full" />
       </div>
     );
   }
@@ -75,11 +99,11 @@ export default function DashboardPage() {
   if (error) {
     return (
       <div className="text-center py-20">
-        <div className="text-4xl mb-4">⚠️</div>
-        <p className="text-gray-700 mb-4">{error}</p>
+        <IconAlert />
+        <p className="text-slate-700 mb-4">{error}</p>
         <button
           onClick={() => window.location.reload()}
-          className="px-5 py-2.5 bg-amber-500 hover:bg-amber-600 text-white rounded-xl font-semibold text-sm transition-all"
+          className="px-5 py-2.5 bg-green-500 hover:bg-green-600 text-white rounded-xl font-semibold text-sm transition-all duration-150"
         >
           Coba Lagi
         </button>
@@ -89,26 +113,50 @@ export default function DashboardPage() {
 
   return (
     <div>
-      <h1 className="text-2xl font-semibold text-gray-900 mb-1">Halo, {userName || 'Pengguna'} 👋</h1>
-      <p className="text-gray-500 mb-8">Selamat datang di dashboard Youth Invitation</p>
+      <h1 className="text-2xl font-semibold text-slate-900 mb-1">
+        Halo, {userName || 'Pengguna'}
+      </h1>
+      <p className="text-slate-500 mb-8">Selamat datang di dashboard Youth Invitation</p>
 
       {stats && (
         <div className="grid sm:grid-cols-3 gap-6 mb-8">
-          <StatCard icon="💌" label="Total Undangan" value={stats.total_invitations} color="bg-amber-50 text-amber-700" />
-          <StatCard icon="✅" label="Undangan Aktif" value={stats.active_invitations} color="bg-green-50 text-green-700" />
-          <StatCard icon="📋" label="Total RSVP" value={stats.total_rsvp} color="bg-blue-50 text-blue-700" />
+          <StatCard
+            icon={<IconMail />}
+            iconBg="bg-blue-50 text-blue-600"
+            label="Total Undangan"
+            value={stats.total_invitations}
+            valueColor="text-blue-600"
+          />
+          <StatCard
+            icon={<IconCheck />}
+            iconBg="bg-green-50 text-green-600"
+            label="Undangan Aktif"
+            value={stats.active_invitations}
+            valueColor="text-green-600"
+          />
+          <StatCard
+            icon={<IconClipboard />}
+            iconBg="bg-slate-100 text-slate-600"
+            label="Total RSVP"
+            value={stats.total_rsvp}
+            valueColor="text-slate-700"
+          />
         </div>
       )}
 
-      <div className="bg-white rounded-2xl p-8 border border-gray-100 text-center">
+      <div className="bg-white rounded-2xl p-8 border border-slate-100 text-center shadow-sm">
         {!stats || stats.total_invitations === 0 ? (
           <>
-            <div className="text-6xl mb-4">💌</div>
-            <h2 className="text-xl font-semibold text-gray-900 mb-2">Belum Ada Undangan</h2>
-            <p className="text-gray-500 mb-6">Mulai buat undangan digital pertamamu sekarang!</p>
+            <div className="w-16 h-16 bg-slate-100 rounded-2xl flex items-center justify-center mx-auto mb-4">
+              <svg className="w-8 h-8 text-slate-400" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M3 8l7.89 5.26a2 2 0 002.22 0L21 8M5 19h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z" />
+              </svg>
+            </div>
+            <h2 className="text-xl font-semibold text-slate-900 mb-2">Belum Ada Undangan</h2>
+            <p className="text-slate-500 mb-6">Mulai buat undangan digital pertamamu sekarang!</p>
             <Link
               href="/dashboard/invitations/new"
-              className="inline-block px-6 py-3 bg-amber-500 hover:bg-amber-600 text-white rounded-xl font-semibold transition-all shadow-lg shadow-amber-500/25"
+              className="inline-block px-6 py-3 bg-green-500 hover:bg-green-600 text-white rounded-xl font-semibold transition-all duration-150 shadow-lg shadow-green-500/25"
             >
               Buat Undangan
             </Link>
@@ -116,14 +164,14 @@ export default function DashboardPage() {
         ) : (
           <div className="text-left">
             <div className="flex items-center justify-between mb-4">
-              <h2 className="text-lg font-semibold text-gray-900">Undangan Terbaru</h2>
-              <Link href="/dashboard/invitations" className="text-amber-600 hover:text-amber-700 text-sm font-medium">
-                Lihat Semua →
+              <h2 className="text-lg font-semibold text-slate-900">Undangan Terbaru</h2>
+              <Link href="/dashboard/invitations" className="text-green-600 hover:text-green-700 text-sm font-medium transition-colors duration-150">
+                Lihat Semua &rarr;
               </Link>
             </div>
             <Link
               href="/dashboard/invitations/new"
-              className="inline-block px-5 py-2.5 bg-amber-500 hover:bg-amber-600 text-white rounded-xl font-semibold text-sm transition-all"
+              className="inline-block px-5 py-2.5 bg-green-500 hover:bg-green-600 text-white rounded-xl font-semibold text-sm transition-all duration-150"
             >
               + Buat Baru
             </Link>
@@ -134,14 +182,28 @@ export default function DashboardPage() {
   );
 }
 
-function StatCard({ icon, label, value, color }: { icon: string; label: string; value: number; color: string }) {
+function StatCard({
+  icon,
+  iconBg,
+  label,
+  value,
+  valueColor,
+}: {
+  icon: React.ReactNode;
+  iconBg: string;
+  label: string;
+  value: number;
+  valueColor: string;
+}) {
   return (
-    <div className="bg-white rounded-2xl p-6 border border-gray-100">
+    <div className="bg-white rounded-2xl p-6 border border-slate-100 shadow-sm">
       <div className="flex items-center gap-3 mb-3">
-        <span className="text-2xl">{icon}</span>
-        <span className="text-sm text-gray-500">{label}</span>
+        <div className={`w-10 h-10 rounded-xl flex items-center justify-center ${iconBg}`}>
+          {icon}
+        </div>
+        <span className="text-sm text-slate-500">{label}</span>
       </div>
-      <p className={`text-3xl font-bold ${color.split(' ')[1]}`}>{value}</p>
+      <p className={`text-3xl font-bold ${valueColor}`}>{value}</p>
     </div>
   );
 }

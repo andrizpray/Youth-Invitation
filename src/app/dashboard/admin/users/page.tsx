@@ -12,6 +12,14 @@ interface UserRow {
   invitation_count: number;
 }
 
+const EmptyUsersIcon = () => (
+  <svg className="w-8 h-8 text-slate-400" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
+    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0zm6 3a2 2 0 11-4 0 2 2 0 014 0zM7 10a2 2 0 11-4 0 2 2 0 014 0z" />
+  </svg>
+);
+
+const inputCls = 'w-full px-3 py-2 border border-slate-200 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-green-500 transition-all duration-150';
+
 export default function AdminUsersPage() {
   const [users, setUsers] = useState<UserRow[]>([]);
   const [loading, setLoading] = useState(true);
@@ -20,7 +28,6 @@ export default function AdminUsersPage() {
   const [actionSuccess, setActionSuccess] = useState('');
   const [processingId, setProcessingId] = useState<string | null>(null);
 
-  // Create user form
   const [showCreate, setShowCreate] = useState(false);
   const [form, setForm] = useState({ name: '', email: '', password: '', role: 'user' });
   const [creating, setCreating] = useState(false);
@@ -31,7 +38,7 @@ export default function AdminUsersPage() {
   useEffect(() => () => clearTimeout(notifyTimerRef.current), []);
 
   const loadUsers = () => {
-    fetch('/api/admin/users')
+    fetch('/api/admin/users', { credentials: 'include' })
       .then(async (res) => {
         if (res.status === 403) { router.push('/dashboard'); return; }
         if (!res.ok) throw new Error('Gagal memuat pengguna');
@@ -93,6 +100,7 @@ export default function AdminUsersPage() {
       const res = await fetch('/api/admin/users', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
+        credentials: 'include',
         body: JSON.stringify(form),
       });
       const data = await res.json();
@@ -111,17 +119,13 @@ export default function AdminUsersPage() {
   if (loading) {
     return (
       <div className="flex items-center justify-center py-20">
-        <div className="animate-spin w-8 h-8 border-4 border-amber-500 border-t-transparent rounded-full" />
+        <div className="animate-spin w-8 h-8 border-4 border-green-500 border-t-transparent rounded-full" />
       </div>
     );
   }
 
   if (error) {
-    return (
-      <div className="p-4 bg-red-50 border border-red-200 text-red-700 rounded-2xl text-sm">
-        ❌ {error}
-      </div>
-    );
+    return <div role="alert" className="p-4 bg-red-50 border border-red-200 text-red-700 rounded-2xl text-sm">{error}</div>;
   }
 
   return (
@@ -129,12 +133,12 @@ export default function AdminUsersPage() {
       {/* Header */}
       <div className="flex items-center justify-between mb-8">
         <div>
-          <h1 className="text-2xl font-semibold text-gray-900">Manajemen Pengguna</h1>
-          <p className="text-gray-500 text-sm">{users.length} pengguna terdaftar</p>
+          <h1 className="text-2xl font-semibold text-slate-900">Manajemen Pengguna</h1>
+          <p className="text-slate-500 text-sm">{users.length} pengguna terdaftar</p>
         </div>
         <button
           onClick={() => setShowCreate(!showCreate)}
-          className="px-5 py-2.5 bg-amber-500 hover:bg-amber-600 text-white rounded-xl font-semibold text-sm transition-all shadow-lg shadow-amber-500/25"
+          className="px-5 py-2.5 bg-green-500 hover:bg-green-600 text-white rounded-xl font-semibold text-sm transition-all duration-150 shadow-lg shadow-green-500/25"
         >
           + Tambah Pengguna
         </button>
@@ -142,79 +146,39 @@ export default function AdminUsersPage() {
 
       {/* Notifications */}
       {actionError && (
-        <div className="mb-4 p-3 bg-red-50 border border-red-200 text-red-700 text-sm rounded-xl">
-          ❌ {actionError}
-        </div>
+        <div role="alert" className="mb-4 p-3 bg-red-50 border border-red-200 text-red-700 text-sm rounded-xl">{actionError}</div>
       )}
       {actionSuccess && (
-        <div className="mb-4 p-3 bg-green-50 border border-green-200 text-green-700 text-sm rounded-xl">
-          ✅ {actionSuccess}
-        </div>
+        <div role="status" className="mb-4 p-3 bg-green-50 border border-green-200 text-green-700 text-sm rounded-xl">{actionSuccess}</div>
       )}
 
       {/* Create User Form */}
       {showCreate && (
-        <div className="bg-white rounded-2xl p-6 border border-amber-200 mb-6">
-          <h2 className="text-lg font-semibold text-gray-900 mb-4">Buat Pengguna Baru</h2>
+        <div className="bg-white rounded-2xl p-6 border border-green-200 shadow-sm mb-6">
+          <h2 className="text-lg font-semibold text-slate-900 mb-4">Buat Pengguna Baru</h2>
           <form onSubmit={handleCreate} className="grid sm:grid-cols-2 gap-4">
             <div>
-              <label className="block text-sm font-medium text-gray-700 mb-1">Nama</label>
-              <input
-                type="text"
-                required
-                value={form.name}
-                onChange={(e) => setForm({ ...form, name: e.target.value })}
-                className="w-full px-3 py-2 border border-gray-200 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-amber-400"
-                placeholder="Nama lengkap"
-              />
+              <label className="block text-sm font-medium text-slate-700 mb-1">Nama</label>
+              <input type="text" required value={form.name} onChange={(e) => setForm({ ...form, name: e.target.value })} className={inputCls} placeholder="Nama lengkap" />
             </div>
             <div>
-              <label className="block text-sm font-medium text-gray-700 mb-1">Email</label>
-              <input
-                type="email"
-                required
-                value={form.email}
-                onChange={(e) => setForm({ ...form, email: e.target.value })}
-                className="w-full px-3 py-2 border border-gray-200 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-amber-400"
-                placeholder="email@contoh.com"
-              />
+              <label className="block text-sm font-medium text-slate-700 mb-1">Email</label>
+              <input type="email" required value={form.email} onChange={(e) => setForm({ ...form, email: e.target.value })} className={inputCls} placeholder="email@contoh.com" />
             </div>
             <div>
-              <label className="block text-sm font-medium text-gray-700 mb-1">Password</label>
-              <input
-                type="password"
-                required
-                minLength={6}
-                value={form.password}
-                onChange={(e) => setForm({ ...form, password: e.target.value })}
-                className="w-full px-3 py-2 border border-gray-200 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-amber-400"
-                placeholder="Min. 6 karakter"
-              />
+              <label className="block text-sm font-medium text-slate-700 mb-1">Password</label>
+              <input type="password" required minLength={6} value={form.password} onChange={(e) => setForm({ ...form, password: e.target.value })} className={inputCls} placeholder="Min. 6 karakter" />
             </div>
             <div>
-              <label className="block text-sm font-medium text-gray-700 mb-1">Role</label>
-              <select
-                value={form.role}
-                onChange={(e) => setForm({ ...form, role: e.target.value })}
-                className="w-full px-3 py-2 border border-gray-200 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-amber-400"
-              >
+              <label className="block text-sm font-medium text-slate-700 mb-1">Role</label>
+              <select value={form.role} onChange={(e) => setForm({ ...form, role: e.target.value })} className={inputCls}>
                 <option value="user">User</option>
                 <option value="admin">Admin</option>
               </select>
             </div>
             <div className="sm:col-span-2 flex gap-3 justify-end">
-              <button
-                type="button"
-                onClick={() => setShowCreate(false)}
-                className="px-4 py-2 text-sm text-gray-600 hover:bg-gray-100 rounded-xl transition-all"
-              >
-                Batal
-              </button>
-              <button
-                type="submit"
-                disabled={creating}
-                className="px-5 py-2 bg-amber-500 hover:bg-amber-600 disabled:opacity-50 text-white rounded-xl font-semibold text-sm transition-all"
-              >
+              <button type="button" onClick={() => setShowCreate(false)} className="px-4 py-2 text-sm text-slate-600 hover:bg-slate-100 rounded-xl transition-all duration-150">Batal</button>
+              <button type="submit" disabled={creating} className="px-5 py-2 bg-green-500 hover:bg-green-600 disabled:opacity-50 text-white rounded-xl font-semibold text-sm transition-all duration-150">
                 {creating ? 'Menyimpan...' : 'Simpan'}
               </button>
             </div>
@@ -224,48 +188,42 @@ export default function AdminUsersPage() {
 
       {/* Users List */}
       {users.length === 0 ? (
-        <div className="bg-white rounded-2xl p-12 border border-gray-100 text-center">
-          <div className="text-5xl mb-4">👥</div>
-          <h2 className="text-lg font-semibold text-gray-900 mb-2">Belum Ada Pengguna</h2>
-          <p className="text-gray-500">Tambahkan pengguna pertama menggunakan tombol di atas.</p>
+        <div className="bg-white rounded-2xl p-12 border border-slate-100 shadow-sm text-center">
+          <div className="flex justify-center mb-4"><EmptyUsersIcon /></div>
+          <h2 className="text-lg font-semibold text-slate-900 mb-2">Belum Ada Pengguna</h2>
+          <p className="text-slate-500">Tambahkan pengguna pertama menggunakan tombol di atas.</p>
         </div>
       ) : (
         <div className="grid gap-3">
           {users.map((u) => (
-            <div key={u.id} className="bg-white rounded-2xl p-5 border border-gray-100 hover:shadow-md transition-all">
+            <div key={u.id} className="bg-white rounded-2xl p-5 border border-slate-100 hover:shadow-md transition-all duration-150">
               <div className="flex items-center gap-4">
-                {/* Avatar */}
-                <div className="w-10 h-10 bg-amber-100 rounded-full flex items-center justify-center text-amber-700 font-semibold shrink-0">
+                <div className="w-10 h-10 bg-green-100 rounded-full flex items-center justify-center text-green-700 font-semibold shrink-0">
                   {u.name.charAt(0).toUpperCase()}
                 </div>
-
-                {/* Info */}
                 <div className="flex-1 min-w-0">
                   <div className="flex items-center gap-2 flex-wrap">
-                    <span className="font-semibold text-gray-900">{u.name}</span>
+                    <span className="font-semibold text-slate-900">{u.name}</span>
                     <span className={`px-2 py-0.5 text-xs rounded-full font-medium ${
-                      u.role === 'admin'
-                        ? 'bg-amber-100 text-amber-700'
-                        : 'bg-gray-100 text-gray-600'
+                      u.role === 'admin' ? 'bg-green-100 text-green-700' : 'bg-slate-100 text-slate-600'
                     }`}>
                       {u.role}
                     </span>
                   </div>
-                  <p className="text-sm text-gray-500 truncate">{u.email}</p>
-                  <p className="text-xs text-gray-400 mt-0.5">
+                  <p className="text-sm text-slate-500 truncate">{u.email}</p>
+                  <p className="text-xs text-slate-400 mt-0.5">
                     {u.invitation_count} undangan
-                    <span className="mx-1.5">·</span>
+                    <span className="mx-1.5">&middot;</span>
                     Bergabung {new Date(u.created_at).toLocaleDateString('id-ID', { day: 'numeric', month: 'short', year: 'numeric' })}
                   </p>
                 </div>
-
-                {/* Actions */}
                 <div className="flex items-center gap-2 shrink-0">
                   <select
                     value={u.role}
                     disabled={processingId === u.id}
                     onChange={(e) => handleRoleChange(u.id, e.target.value)}
-                    className="text-xs border border-gray-200 rounded-lg px-2 py-1.5 focus:outline-none focus:ring-2 focus:ring-amber-400 disabled:opacity-50"
+                    className="text-xs border border-slate-200 rounded-lg px-2 py-1.5 focus:outline-none focus:ring-2 focus:ring-green-500 disabled:opacity-50"
+                    aria-label={`Role untuk ${u.name}`}
                   >
                     <option value="user">User</option>
                     <option value="admin">Admin</option>
@@ -273,7 +231,7 @@ export default function AdminUsersPage() {
                   <button
                     onClick={() => handleDelete(u.id, u.name)}
                     disabled={processingId === u.id}
-                    className="px-3 py-1.5 bg-red-50 hover:bg-red-100 text-red-600 text-xs rounded-lg transition-all disabled:opacity-50"
+                    className="px-3 py-1.5 bg-red-50 hover:bg-red-100 text-red-600 text-xs rounded-lg transition-all duration-150 disabled:opacity-50"
                   >
                     Hapus
                   </button>
